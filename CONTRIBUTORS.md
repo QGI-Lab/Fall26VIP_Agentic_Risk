@@ -9,10 +9,14 @@ Students add themselves through their first pull request using the
 [enrollment steps](docs/contributors/README.md#first-contribution).
 Keep rows alphabetical by preferred public name.
 
-| Preferred public name | GitHub                                       |
-| --------------------- | -------------------------------------------- |
-| Yusuke Katsuki        | [@katsukii](https://github.com/katsukii)     |
-| Pin-Ray Liao          | [@bill255203](https://github.com/bill255203) |
+| Preferred public name | GitHub |
+| --- | --- |
+| Bill Qiu | [@zq2082](https://github.com/zq2082) |
+| Enhua Zhu | [@ezhu001](https://github.com/ezhu001) |
+| Pin-Ray Liao | [@bill255203](https://github.com/bill255203) |
+| Yihan Yao | [@geenana](https://github.com/geenana) |
+| Yusuke Katsuki | [@katsukii](https://github.com/katsukii) |
+| Ziqian Zhu | [@ziqianz360](https://github.com/ziqianz360) |
 
 A GitHub username is sufficient as a public display name. Link the GitHub profile;
 keep private emails, student IDs, grades, and other student records outside this file.
