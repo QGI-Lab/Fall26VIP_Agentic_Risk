@@ -14,6 +14,7 @@ Keep rows alphabetical by preferred public name.
 | Asmit Datta | [@sm11t](https://github.com/sm11t) |
 | Bill Qiu | [@zq2082](https://github.com/zq2082) |
 | Enhua Zhu | [@ezhu001](https://github.com/ezhu001) |
+| Pin-Ray Liao | [@bill255203](https://github.com/bill255203) |
 | Yihan Yao | [@geenana](https://github.com/geenana) |
 | Yusuke Katsuki | [@katsukii](https://github.com/katsukii) |
 | Ziqian Zhu | [@ziqianz360](https://github.com/ziqianz360) |
