@@ -12,6 +12,10 @@ assumed by this template.
 
 | Pair / partners | Case issue | Question and finding | Case document / final report | Midterm / final slides | Evidence / peer handoff check |
 | --- | --- | --- | --- | --- | --- |
+| @katsukii / @bill255203 | [#58](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/58) | Does a final completeness check reduce missed retail requests? Effect pending. | [Draft outline/notebook #63](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/pull/63) | Pending | [Development/task #62](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/62); peer handoff pending |
+| @ezhu001 / @ziqianz360 | [#59](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/59) | Does source verification reduce incorrect derived filing claims? Effect pending. | [Case document](../studies/financial_filing_verification.md) | Pending | [Development/task #61](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/61); peer handoff pending |
+| @geenana / @zq2082 | [#65](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/65) | Does citation verification reduce unsupported claims while preserving useful answers? Evidence pending. | [Draft outline #68](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/pull/68) | Pending | Tasks [#66](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/66), [#67](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/67); peer handoff pending |
+| @lisasiliu / @sm11t / @arghyas2 (reported team of three) | [#71](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/71) | Trading-workflow evaluation; primary question selection pending. | [Outline under review #72](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/pull/72) | Pending | Individual research tasks and feasibility evidence pending |
 
 Keep the summary to the bounded question and a short finding with its main limit;
 write "pending" until there is evidence. Reuse the case document's wording when

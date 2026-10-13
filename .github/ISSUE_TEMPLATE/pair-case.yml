@@ -6,12 +6,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        One partner creates this issue for both partners, once for the semester, and links it in #3. Keep shared outputs in the checklist below; each partner links their own Individual tasks here. Reuse this case for the proposal, presentations, analysis and report. Start small and refine with peer feedback; no instructor sign-off or appointed mentor is required. The instructor may adapt scope, pairings and timing. Use the [case guide](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/blob/main/docs/studies/README.md). No platform or paid access is assumed.
+        One member creates this issue for the team, once for the semester, and links it in #3. The default is a pair; if the instructor adapts team size, name all members and use the same workflow. Keep shared outputs in the checklist below; each member links their own Individual tasks here. Reuse this case for the proposal, presentations, analysis and report. Start small and refine with peer feedback; no instructor sign-off or appointed mentor is required. The instructor may adapt scope, pairings and timing. Use the [case guide](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/blob/main/docs/studies/README.md). No platform or paid access is assumed.
   - type: input
     id: partners
     attributes:
       label: Partners and peer feedback
-      description: Name both GitHub usernames. Add peer reviewers when arranged; an unassigned reviewer does not block starting.
+      description: Name both GitHub usernames, or all members if course direction adapts team size. Add peer reviewers when arranged; an unassigned reviewer does not block starting.
       placeholder: "@PARTNER-ONE and @PARTNER-TWO; peer feedback to be arranged."
     validations:
       required: true
@@ -43,11 +43,11 @@ body:
         - [ ] M3 Oct 16 — midterm slides/feedback linked (#21); dated method and feasibility check linked (#7)
         - [ ] During evidence work — evaluation rules recorded before use; exploratory work and later changes identified
         - [ ] M4 Oct 30 — first checked analysis, failures and limitations linked (#8)
-        - [ ] Nov 6 — pair report draft and both individual report drafts linked
+        - [ ] Nov 6 — pair report draft and each member's individual report draft linked
         - [ ] M5 Nov 20 — reviewed report/evidence and peer handoff check linked (#9)
         - [ ] M5 Nov 20 — final presentation and feedback linked (#22)
         - [ ] M5 Nov 20 — each student's individual report task linked (#23)
-        - [ ] Both partners' contributions reviewed; report index updated; remaining work recorded
+        - [ ] Each member's contributions reviewed; report index updated; remaining work recorded
   - type: textarea
     id: evidence
     attributes:

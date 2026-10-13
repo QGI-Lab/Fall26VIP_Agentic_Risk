@@ -130,6 +130,11 @@ A date does not make an unfinished study complete. See the [canonical schedule](
 4. Submit a PR when repository files change; respond to feedback. Close only your
    completed task. A pair case stays open until the pair's full work is reviewed.
 
+If the course also uses a weekly workbook, reuse the same update or an accessible
+link; no second weekly narrative or weekly issue is needed. Keep evidence links and
+current blockers in the relevant task. The [management view](management.md) helps
+maintainers find support needs and each team's next action.
+
 **Before calling a task done:** link your output, explain what you did and found,
 and link a peer's check of the agreed criteria. A partner can review; a checked
 failed attempt or useful diagnosis can be a valid output. If review is pending,
