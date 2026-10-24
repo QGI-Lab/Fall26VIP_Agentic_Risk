@@ -3,6 +3,10 @@
 **One shared case per pair; one owner per Individual task.** Issues and PRs are the
 contribution record. Do not create an issue for every meeting, comment, or weekly update.
 
+The instructor may adapt team size. Keep the existing **Pair case** issue type,
+name all actual members, and give each member their own tasks and report. Record
+announced course/assessment arrangements in #24; the case name does not fix team size.
+
 ## Find individual and pair assignments
 
 The issue title and assignment label show **who produces the deliverable**:
@@ -87,6 +91,9 @@ link it from the benefiting pair. Assignees/labels/milestones can be set by a
 maintainer; missing edit permissions do not prevent starting agreed work.
 
 ## Management view
+
+Open the [management page](management.md) for live queues, the current case overview
+and maintainer research follow-ups. The detailed workflow below explains the fields.
 
 Start with the registry and attention queues below. The issue body and linked
 evidence are the record; a separate Project board or activity spreadsheet is optional.
@@ -217,6 +224,8 @@ participant/pair is covered or an explicit scope adjustment is recorded.
 
 Use one short weekly update in each active task: evidence, next step, blocker. Keep
 completed links visible. No duplicate portfolio, public gradebook, or weekly report.
+If course direction uses a weekly workbook, reuse its update or an accessible link;
+keep task evidence and current blockers visible without a second narrative.
 When a dependency blocks progress, preserve the existing work, narrow the next
 task and record why. Ask the instructor for unresolved workload/partnership issues
 or changes to assessed expectations. Late joiners get suitable targets. Course

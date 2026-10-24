@@ -13,8 +13,12 @@ the rubric is a shared reference, not an instructor administration checklist.
 
 ## Proposed grade: 75% individual, 25% pair
 
-“Shared” means **the two partners' case**, not the whole cohort. Each student receives
-individual marks plus their pair's shared marks; overall grades can differ.
+“Shared” means **the case team's output**, normally produced by a pair. Each student
+receives individual marks plus their case's shared marks; overall grades can differ.
+
+If the instructor adapts team size, name all members in the existing Pair case and
+record the announced shared-assessment arrangement in #24. Each member still has
+their own contribution evidence and individual report; no weight change is implied.
 
 | Component | Weight | What is assessed |
 | --- | ---: | --- |
