@@ -16,6 +16,11 @@ support the tasks agreed after kickoff. Each pair develops its own case; no plat
 
 ## Workflow
 
+This repository primarily tracks evolving research. Useful outlines, notes and
+development snapshots can merge with unfinished next steps clearly recorded.
+Acceptance records progress; it does not require a finished protocol, completed
+experiments or a publishable result. Research feedback can guide later updates.
+
 Use the same task/PR workflow for onboarding and later work. An introduction PR
 needs a roster change, a short introduction, its Individual task link, and
 `Relates to #5`; it can omit the research interpretation and detailed evidence sections.
@@ -64,11 +69,18 @@ Keep original authors when integrating student changes. If a maintainer must che
 The [access guide](docs/access-management.md) records current GitHub settings,
 onboarding and removal of access, reviewer eligibility, and the owner bypass.
 
-`main` requires a pull request, one approving review, resolved conversations, and passing `test (3.11)` and `test (3.13)` CI checks. New commits dismiss stale approvals. Force pushes and branch deletion are disabled. The repository uses merge commits and disables squash/rebase merging to preserve the original contribution history.
+`main` is protected and requires passing `test (3.11)` and `test (3.13)` CI checks.
+Follow the PR merge panel for current approval, code-owner and conversation
+requirements; new commits may require a fresh review. Use a merge commit to
+preserve the original student contribution history. The access guide distinguishes
+the current permission check from the full pre-transfer protection snapshot.
 
-Changes to workflow configuration and core research/semester policy require a code-owner review. The initial code owner is the repository owner, `@zhongnz`; update `.github/CODEOWNERS` through review when actual maintainers are appointed. No student access or role is assumed from appearing in the public roster.
+Changes to workflow configuration and core research/semester policy require a code-owner review. `@zhongnz` remains the listed policy reviewer; the repository owner is now `@QGI-Lab`. Update `.github/CODEOWNERS` through review when actual maintainers are appointed. No student access or role is assumed from appearing in the public roster.
 
-The repository owner retains GitHub's administrator bypass for bootstrap or recovery while the cohort is being onboarded. Ordinary student work follows the review path. Document any exceptional bypass and its reason in the relevant issue or pull request.
+The owner manages any administrator exception allowed by the actual branch settings.
+`@zhongnz` now has Write access and cannot use the former owner bypass. Ordinary
+student work follows the review path. Document any exceptional bypass and its reason
+in the relevant issue or pull request; account permissions govern what is possible.
 
 ## Experiment changes
 

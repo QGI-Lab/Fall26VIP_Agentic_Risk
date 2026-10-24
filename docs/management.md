@@ -1,112 +1,79 @@
 # Fall 2026 management view
 
-Use this page to find team cases, individual evidence, support needs and research
-follow-ups. [Registry #3](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/3)
-links the cases; each case and its Individual tasks remain the working record.
-The repository owner maintains this overview. Students update their existing work.
-An open outline PR does not block agreed development work; respond to feedback in
-the existing case/branch while the PR receives its repository review.
+This repository primarily tracks the cohort's evolving work. Useful outlines,
+reading notes, development snapshots and progress reports can be accepted while
+methods and experiments are still being refined. Merging records a contribution;
+future work stays visible in the existing case/tasks. Grades follow course policy.
+
+Start with [registry #3](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/3).
+Students keep their own evidence and short updates; maintainers route work and
+refresh this overview when a direction changes. No duplicate weekly report is needed.
 
 ## Live queues
 
-These searches reflect GitHub's current issue fields and PR state automatically.
-
-| What to check | Open the view |
+| What to check | View |
 | --- | --- |
-| Team cases and shared checkpoints | [Case issues](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3Apair-case) |
-| Individual contributions, including completed work | [Individual tasks](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20label%3Aindividual-task); add `assignee:USERNAME`, or check the owner in the body if assignment is unavailable |
-| Evidence asking for a check | [Needs review](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3Aneeds-review) |
-| Access, setup or scope support | [Help wanted](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22help%20wanted%22) |
-| PRs authors have marked ready | [Open non-draft PRs](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/pulls?q=is%3Apr%20is%3Aopen%20draft%3Afalse) |
-| Work still being developed | [Draft PRs](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/pulls?q=is%3Apr%20is%3Aopen%20draft%3Atrue) |
-| Personal tasks needing routing | [Missing assignee](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3Aindividual-task%20no%3Aassignee%20-label%3Aoptional) / [missing milestone](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3Aindividual-task%20no%3Amilestone%20-label%3Aoptional%20-label%3Acandidate%20-label%3Astretch) |
-| Maintainer research and resource work | [Owner tasks](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20assignee%3Azhongnz%20-label%3Aindividual-task%20-label%3Apair-case) / [research and access plan #74](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/74) |
+| Team cases and checkpoints | [Case issues](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3Apair-case) |
+| Individual contributions, including completed work | [Individual tasks](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20label%3Aindividual-task); add `assignee:USERNAME`, or check the owner named in the body |
+| Submitted work asking for a check | [Needs review](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3Aneeds-review) |
+| Access, setup or scope support | [Help wanted](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22help%20wanted%22) |
+| Ready PRs / working drafts | [Ready](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/pulls?q=is%3Apr%20is%3Aopen%20draft%3Afalse) / [drafts](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/pulls?q=is%3Apr%20is%3Aopen%20draft%3Atrue) |
+| Tasks needing routing | [Missing assignee](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3Aindividual-task%20no%3Aassignee%20-label%3Aoptional) / [missing milestone](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues?q=is%3Aissue%20is%3Aopen%20label%3Aindividual-task%20no%3Amilestone%20-label%3Aoptional%20-label%3Acandidate%20-label%3Astretch) |
+| Maintainer research and resource planning | [#74](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/74) |
 
-Case assignees may identify only the eligible coordinator; the body names all
-members. GitHub may require a participant to comment before that person can be
-assigned. Missing assignment does not erase work or require repository write access.
-Neither issue counts nor milestone completion percentages are grades.
+Case bodies name all members; an assignee may identify only the coordinator GitHub
+allows us to assign. Missing assignment does not erase a contribution. Counts,
+checkboxes and issue closure are tracking signals, not grades.
 
-## Case overview — checked October 13
+## Case overview — October 24
 
-This is a dated summary, not an automatic status feed. Links point to the current
-records. Development counts below are student-reported, not independently rerun
-or estimates of an intervention's effectiveness. Update this table after a
-substantive scope/support decision, rather than copying every weekly report.
+This is a dated summary; issue links carry later updates. Experimental outcomes
+below are reported development work, not independent reruns or general effect estimates.
 
-| Case / members | Evidence and current scope | Next useful action for M3 |
+| Case / members | Recorded progress | Next step as work develops |
 | --- | --- | --- |
-| [Retail completion #58](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/58): @katsukii, @bill255203 | [Draft outline/notebook #63](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/pull/63); tasks [#62](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/62), [#64](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/64). The team changed from stale inventory to a final request-completeness check. #62 reports 39/40 baseline successes across 10 tasks with four runs each, and possible simulated-customer involvement in the failure. | Check the failure trace and scoring; state the next task-selection/model rule and budget before more runs. Keep failure-seeking work as development; compare the check on declared evaluation tasks with the same baseline conditions. |
-| [Financial filings #59](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/59): @ezhu001, @ziqianz360 | [Outline #60](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/pull/60); tasks [#61](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/61), [#69](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/69), [#70](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/70). #61 reports correct baseline and verification results for three development tasks; calculations are deterministic Python and the model extracts values. | Peer-check the notebook/reference evidence. Define held-out filings/tasks, source/period/unit labels and numeric tolerances; pin the model version and settings. Measure extraction and incorrect agreement explicitly; this probe does not test model-generated arithmetic. |
-| [Citation grounding #65](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/65): @geenana, @zq2082 | [Draft outline #68](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/pull/68); tasks [#66](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/66), [#67](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/67). Initial plan compares cited answers with a post-generation check; no experiment results are recorded. | Check a small source/question/reference set and a genuine baseline run. Define claim labels, treatment of ambiguous claims and useful answer coverage, so deleting claims does not look like better task performance. |
-| [Trading evaluation #71](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/71): @lisasiliu, @sm11t, @arghyas2; reported team of three | [Outline #72](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/pull/72) lists four candidate questions; individual research tasks and a feasibility result are not yet linked. | Select one primary question, with the others as follow-ups. Give each member a contribution within that question and link their task. Check one affordable ticker/date run or record the blocker before expanding. |
+| [Retail workflow #58](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/58): @katsukii, @bill255203 | [Outline and notebooks](studies/pair-retail-order-agents.md), merged in [#63](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/pull/63). The Oct 7 Gemini pilot remains 39/40 with zero confirmed agent omissions. Oct 22 updates add difficult Qwen/HPC tasks and provisional failure classification. [#64](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/64) now links an online verifier implementation, five reported tests and one successful local demonstration. | Continue linking traces and checking failure labels; record which verifier runs only observe and which intervene. Compare conditions when ready. Hand-picked hard tasks are not directly comparable with the earlier pilot. |
+| [Financial filings #59](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/59): @ezhu001, @ziqianz360 | [Case document](studies/financial_filing_verification.md), merged in #60. The [M3 update](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/59#issuecomment-6178074517) adds a FinBERT encoder ranker, controlled evidence-selection stress and two verification approaches. The earlier Qwen extraction probe is separate development history. Reading/design records are linked in #61/#69/#70/#76. | Add further filings and link the next notebook/results. Keep the known-target-alias verifier labeled as a diagnostic upper bound and retain the limits of the small development set. |
+| [Wealth management #65](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/65): @geenana, @zq2082 | [Revised outline](studies/pair-wealth-management-agents.md), merged in [#68](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/pull/68). The team records professor feedback and a move from citation verification to intake, portfolio construction/risk control and independent review. Python scaffolding is reported; systematic evaluation remains pending. | Link the implementation and a small synthetic example when available; refine prompts and outcome labels as the workflow develops. Keep contributions visible through #66/#67 and later work records. |
+| [Trading evaluation #71](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/71): @lisasiliu, @sm11t, @arghyas2 | [Exploratory outline](studies/pair-trading-agent-risk.md), merged in [#72](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/pull/72). Four candidate directions are recorded. Scope, roles and feasibility remain open; no experimental findings are claimed. | Record the team's next manageable step and each member's contribution when agreed. The current proposal can evolve in the same case; it does not need another registration or a completed protocol to remain visible. |
 
-An additional temporal-contamination proposal appears in the weekly-report
-context but has no registered case/account mapping in GitHub at this check.
-Register its actual members and scope before treating it as a tracked project;
-consider the overlap with #71 when discussing a manageable question.
+Retail implementation evidence lives in the student's
+[online-verifier branch/report](https://github.com/bill255203/tau2-bench/blob/experiment/online-verifier/ONLINE_VERIFIER_LOCAL_RUN_REPORT.md).
+It is linked progress, not code incorporated into this repository or a general
+validation of the verifier. Some shared analysis files require NYU sign-in.
 
-M3's **October 16** date remains a working target until the instructor confirms
-the presentation slot. Teams should bring one question, a feasibility result or
-diagnosed blocker, evidence links, next individual responsibilities and support
-needs. The [semester plan](semester-plan.md#calendar-and-working-targets) gives
-the subsequent October 30, November 6 and November 20 working targets.
+The additional temporal-contamination proposal mentioned in weekly reports still
+has no registered case/account mapping here. Record actual membership and scope if
+it proceeds; no project or completed contribution is inferred from a placeholder.
 
 ## A short maintenance pass
 
-1. Read the review/help queues and case updates. Resolve access and scope blockers
-   first; a missing result is not automatically missing effort.
-2. Route new tasks from their declared owner, parent and target. Personal tasks
-   have one owner; semester-long cases use M5 and their checklist for earlier work.
-3. Review ready PRs and give draft feedback without changing authors' readiness.
-   Check the latest commit, CI and discussions before merging. Preserve student
-   authors; close only tasks whose own evidence/review criteria are satisfied.
-4. Check each active case's next action and each member's attributable work.
-   Keep findings, untested recommendations and development results distinct.
-5. Record shared research/resource decisions in #74 and course arrangements in
-   [#24](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/24). Refresh this
-   overview only when it helps a reader locate a changed question or support need.
+1. Read recent case/task updates and help requests. Accept useful progress with a
+   clear artifact or concise record; let questions and methods evolve.
+2. Set owners, parents and working milestones from the student's record. Keep one
+   case per team and one owner per Individual task; no issue-count quota applies.
+3. Merge useful submissions after required repository checks. Mark a working draft
+   or proposal as such and leave its research follow-ups visible. A merge does not
+   complete every task linked from the PR.
+4. Close completed reading/design packages with a short acceptance note; keep
+   ongoing experiments and semester-long cases open. Preserve original student authors.
+5. Use #74 for shared research/access planning and [#24](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/24)
+   for course arrangements. Reuse workbook updates rather than maintaining a second log.
 
-If the course uses a weekly workbook, reuse that update or an accessible link in
-the relevant task; do not write a second weekly narrative. Keep artifact links and
-current blockers discoverable in GitHub. The raw workbook, meeting access details,
-private student information and unrelated legacy tabs are not needed for this view.
+The next roadmap targets are [October 30, November 6 and November 20](semester-plan.md#calendar-and-working-targets).
+They remain adaptable working targets. A progress note's heading or milestone label
+does not automatically establish completion of a presentation, final report or course requirement.
 
-## Connecting the cases to the research plan
+## Research connection and access
 
-The broad [research scope](research-plan.md#shared-theme) remains the course focus.
-Several current cases investigate checks on evidence or task completion; trading
-evaluation may contribute complementary findings about validity. Use a common
-question/comparison/evidence/utility/limitations vocabulary, while retaining each
-case's appropriate measures. Pool results only when units and conditions are
-compatible; see [shared-study guidance](cohort-guide.md#sharing-an-experiment).
+The [broad research scope](research-plan.md#shared-theme), compatible evidence
+practices and peer feedback connect the cases. Propagation is optional; teams may
+use different methods and measures. Pool results only when the evidence supports
+it. [#74](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/74) tracks potential
+synthesis and resource/outreach preparation without adding student assignments.
 
-Maintainer task #74 covers a focused synthesis question, related-work comparison,
-a research brief, a bounded model/data-access request and outreach preparation.
-These support the cohort; they add no student deliverable. Publication and external
-partnerships depend on evidence and actual arrangements. Student credit and any
-later authorship follow real contributions, including shared methods and synthesis.
-
-For model selection, match capability to the task: the commonly referenced
-[ProsusAI FinBERT](https://github.com/ProsusAI/finBERT) is a financial sentiment
-classifier, not a replacement for a generative filing-extraction agent. For a
-temporal-contamination question, dated inputs and paper trading alone do not isolate
-training-data contamination; document the model revision, cutoff evidence and
-point-in-time information access. Relevant starting sources are
-[Glasserman and Lin](https://arxiv.org/abs/2309.17322) and
-[Look-Ahead-Bench](https://arxiv.org/abs/2601.13770); assess their assumptions before
-selecting a design.
-
-## Optional GitHub Projects board
-
-A native Projects board can later mirror the same issues: create a project owned
-by `zhongnz`, link this repository and add existing cases, Individual tasks and #74.
-Use a table grouped by assignee for contributions and a board grouped by status
-(To do, In progress, Review, Done); retain labels for support needs and issue types.
-Keep the issue evidence as the record. Board status is not a grade or a peer check.
-
-On October 13, the API rejected Projects access because the current CLI token lacks
-`read:project`; managing a board requires `project` permission. No board was created
-by this maintenance pass. If the owner chooses CLI management, authorize that scope
-with `gh auth refresh -h github.com -s project`, then create/link the board. See
-[GitHub's Projects API guidance](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects).
+The repository is now owned by `QGI-Lab`; `zhongnz` has Write access and remains a
+listed code owner. See the [access guide](access-management.md). Routine student PRs
+can be reviewed and merged by an eligible maintainer. Owner settings and exceptions
+require the appropriate account permissions. A separate Projects board is optional;
+these issue views work without creating duplicate cards or forms.

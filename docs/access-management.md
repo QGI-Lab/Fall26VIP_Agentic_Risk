@@ -1,5 +1,12 @@
 # Repository access and protection
 
+**Transfer update, October 24, 2026:** GitHub identifies `QGI-Lab` as the personal
+account owning this repository. `zhongnz` has Write access and remains listed in
+CODEOWNERS. That account can manage issues, review student PRs and merge when the
+required checks are satisfied; it does not have administrator access. Owner-only
+settings and any administrator exception must be handled with the appropriate owner
+permissions. The local canonical remote is now `QGI-Lab/Fall26VIP_Agentic_Risk`.
+
 ## How we work
 
 Students contribute through their own accounts, forks, Individual tasks, and PRs.
@@ -11,7 +18,8 @@ assignment: each owns a separate task and evidence under their Pair case or the 
 | --- | --- |
 | Student contributor | Start with the public fork workflow. Open issues and PRs, comment, and give peer feedback. Ask a maintainer to set labels, milestones, and assignments. |
 | Appointed reviewer / maintainer | The owner grants write access only when the person needs to manage issues, provide required approvals, or merge reviewed PRs. Follow the same protected-main workflow. |
-| Repository owner | `@zhongnz` manages invitations, permissions, branch rules, Actions settings, and exceptional recovery. |
+| Repository owner | `@QGI-Lab` manages invitations, permissions, branch rules, Actions settings, and exceptional recovery. |
+| Current policy reviewer | `@zhongnz` has Write access and is listed in CODEOWNERS; routine student PR review and issue management continue through this account. |
 
 Write access is broader than permission to leave a review: it permits modifying
 repository branches and managing work. Student peer feedback remains useful without
@@ -26,7 +34,7 @@ permissions or create organization teams. See GitHub's
 
 ## Onboarding, changes, and removal
 
-1. Each student opens an onboarding task under [#5](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/5)
+1. Each student opens an onboarding task under [#5](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/5)
    and submits the roster-entry PR. Fork contributions can begin immediately.
 2. If someone needs write access, record the requested responsibility and username
    in their task. The owner confirms the person's identity and role with the course
@@ -38,7 +46,7 @@ permissions or create organization teams. See GitHub's
    access; listing a username alone does not grant it. See
    [GitHub's CODEOWNERS guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
 4. During the semester, the owner reviews accepted and pending access when roles
-   change. At [#9 handoff](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/9),
+   change. At [#9 handoff](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/9),
    retain only people with a continuing responsibility and remove unused invitations
    or write access. Preserve their commits, task evidence, and attribution.
 
@@ -47,13 +55,17 @@ is set. A maintainer sets eligible assignees; students should open/comment on th
 task first. See [GitHub's assignment rules](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/assigning-issues-and-pull-requests-to-other-github-users).
 Onboarding, setup help and optional starter practice do not wait for a permission change.
 
-## Current main protection
+## Main protection and the historical settings snapshot
 
-**Verified through the GitHub API on September 23, 2026.** This is the observed
-configuration; recheck Settings after any change. At this check, `@zhongnz` is
-the only active collaborator. Pending invitations do not count as active reviewers.
+**Current partial check, October 24:** `main` is protected, with required
+`test (3.11)` and `test (3.13)` checks. The Write-level token cannot read the full
+protection configuration. The owner should use Settings to verify detailed rules.
 
-| Control | Current setting |
+The table below is the **September 23 snapshot before transfer**, retained as
+history rather than a fresh claim about all current settings. At that earlier
+check `zhongnz` was the owner and only active collaborator.
+
+| Control | Last full snapshot (before transfer) |
 | --- | --- |
 | Visibility / default branch | Public / `main` |
 | Review before merge | PR required; one approving review |
@@ -66,14 +78,19 @@ the only active collaborator. Pending invitations do not count as active reviewe
 | Merge method | Merge commits enabled; squash and rebase disabled |
 | Administrator enforcement | **Disabled: owner can bypass protections** |
 
-These are classic branch-protection settings; there are currently no repository
-rulesets. The required checks run the unit tests and pilot smoke test. Policy and
-workflow paths have the owner as code owner. Student PRs follow review and CI even
+That snapshot used classic branch protection. The required checks run the unit
+tests and pilot smoke test. Policy/workflow paths currently list `zhongnz` as code owner.
+Student PRs follow review and CI even
 when the author has write access; work goes on a branch or fork, not directly on main.
 
 ### Owner PRs and the bootstrap exception
 
-With only the owner available as an eligible reviewer, owner-authored setup PRs
+The former `zhongnz` owner exception does not grant that account administrator
+rights after transfer. A maintainer cannot approve their own PR; arrange another
+eligible code owner or ask the actual owner to handle a necessary merge under the
+current rules. Prepare the update and pass checks before requesting that action.
+
+Historically, with only the owner available as an eligible reviewer, owner-authored setup PRs
 cannot obtain an independent approval from that same person. The existing
 [bootstrap exception](../CONTRIBUTING.md#repository-review-settings) permits an
 administrator merge after checks pass, with the reason recorded in the PR. This
@@ -88,9 +105,9 @@ Record any later emergency rule change, reason, and restoration in the affected 
 
 ## CI and external access
 
-The current workflow runs on `push` and `pull_request` with `contents: read`.
-Repository defaults are read-only for the Actions token; Actions cannot approve PRs.
-The current fork policy requires approval for first-time contributors. A maintainer
+The current workflow runs on `push` and `pull_request` with `contents: read`;
+it does not approve PRs. Fork runs may require approval under the current Actions
+settings. A maintainer
 inspects the proposed code/workflow before approving a waiting run; approving a run
 does not approve the PR. Later runs remain subject to the current GitHub policy.
 See [approving fork workflows](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/approve-runs-from-forks).
@@ -109,9 +126,9 @@ commits, and public artifacts; the current deterministic CI needs no model API k
 
 ## Owner's check locations
 
-- [Collaborators and invitations](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/settings/access)
-- [Branch protection](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/settings/branches)
-- [Actions permissions](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/settings/actions)
+- [Collaborators and invitations](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/settings/access)
+- [Branch protection](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/settings/branches)
+- [Actions permissions](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/settings/actions)
 
 Settings links require sufficient access. Students use the
 [student guide](student-start.md) and [task workflow](issue-workflow.md).
