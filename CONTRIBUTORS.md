@@ -11,7 +11,14 @@ Keep rows alphabetical by preferred public name.
 
 | Preferred public name | GitHub |
 | --- | --- |
+| Asmit Datta | [@sm11t](https://github.com/sm11t) |
+| Bill Qiu | [@zq2082](https://github.com/zq2082) |
+| Enhua Zhu | [@ezhu001](https://github.com/ezhu001) |
+| Lisa Liu | [@lisasiliu](https://github.com/lisasiliu) |
+| Pin-Ray Liao | [@bill255203](https://github.com/bill255203) |
+| Yihan Yao | [@geenana](https://github.com/geenana) |
 | Yusuke Katsuki | [@katsukii](https://github.com/katsukii) |
+| Ziqian Zhu | [@ziqianz360](https://github.com/ziqianz360) |
 
 A GitHub username is sufficient as a public display name. Link the GitHub profile;
 keep private emails, student IDs, grades, and other student records outside this file.

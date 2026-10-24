@@ -51,7 +51,7 @@ explain what makes a small study rigorous.
 | Choose and plan a pair case | [Case guide](docs/studies/README.md) and [short template](docs/studies/_case-template.md) |
 | Find registered pairs and cases | [Case registry issue #3](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/3) |
 | Track personal work and shared outcomes | [Issue workflow and task map](docs/issue-workflow.md) |
-| Manage progress, help requests and assessment evidence | [Management view](docs/issue-workflow.md#management-view) |
+| Manage team progress, individual evidence and research follow-ups | [Management view](docs/management.md) with live queues and a dated case overview |
 | Tentative 75% individual / 25% pair grading | [Grading proposal](docs/grading-proposal.md) |
 | Beginner concepts, reading, and platform candidates | [Resource guide](docs/literature.md) |
 | Agent Assurance as a source of hypotheses | [Source map](docs/agent-assurance-bridge.md) — optional reference |
