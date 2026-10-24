@@ -3,9 +3,14 @@
 - Pair case issue: [#71](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/71)
 - Partners / GitHub usernames: @lisasiliu, @sm11t, @arghyas2 (Arghya Srivastav); team of three
 - Peer feedback / reviewer (when arranged; no mentor assignment needed to start): to be arranged
-- Status: outline
+- Status: exploratory outline; candidate questions and roles remain open
 - Dated plan revision and available feedback: 2026-10-07 initial outline from team idea discussion
 - Individual task links: TBD
+
+Maintainer tracking note, October 24: retain these ideas as a working proposal.
+Question selection, individual roles, resources and feasibility can be updated in
+[#71](https://github.com/QGI-Lab/Fall26VIP_Agentic_Risk/issues/71) as the team progresses.
+Acceptance of this record does not imply a finished protocol or empirical finding.
 
 ## 1. Business workflow
 
@@ -40,8 +45,10 @@ primary question and treat the rest as follow-ups (see section 5).
    value of inter-agent debate and consensus, compared with assigning different model
    families to different roles?
 3. **Backtest contamination.** Jan–Mar 2024 data may not be out of sample for the
-   commercial models used. Does behavior differ on current live data, using Alpaca
-   paper trading (post-training-cutoff, no real money)?
+   commercial models used. Historical versus contemporary paper-trading observations
+   can be explored, but that comparison alone does not isolate training-data
+   contamination. Model revisions, cutoff evidence and point-in-time data access
+   remain to be checked; contemporary data are not automatically post-cutoff.
 4. **Source weighting in sentiment.** The framework does not weight sentiment by source
    (e.g. follower counts). How many opposing sources are needed to flip the sentiment
    decision, and does this differ for small tickers versus large ones (e.g. NVDA)?
@@ -80,9 +87,9 @@ plan repetitions and report uncertainty.
 - Not yet checked: data access for the 2024 crypto and Feb 2026 oil windows.
 - Proposed first step: run the framework once end-to-end on one ticker/date as the
   smallest feasibility probe.
-- Roles: not yet assigned. Each student opens their own Individual task under this
-  case and chooses a question (one question per person is a natural split). Roles to
-  be agreed by the team.
+- Roles: not yet assigned. Record each member's contribution under this case as
+  work develops. These are candidate questions for a shared study, not separate
+  mandatory experiments for each student; roles and scope can be agreed by the team.
 
 ## 6. Working method
 
