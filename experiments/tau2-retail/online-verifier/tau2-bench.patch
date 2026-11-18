@@ -1,0 +1,1376 @@
+diff --git a/src/tau2/agent/llm_agent.py b/src/tau2/agent/llm_agent.py
+index 652974ff98edb652c582453687977cff1742b7bd..ef28533f759fd4b06daeda4db6c7a8bddc42293b 100644
+--- a/src/tau2/agent/llm_agent.py
++++ b/src/tau2/agent/llm_agent.py
+@@ -9,6 +9,14 @@ from tau2.agent.base_agent import (
+     ValidAgentInputMessage,
+     is_valid_agent_history_message,
+ )
++from tau2.agent.pre_verifier import (
++    PRE_VERIFIER_RULES,
++    PreVerifierRecord,
++    mark_called_removed_tools,
++    prepare,
++    select_order_tools,
++    selection_candidates,
++)
+ from tau2.data_model.message import (
+     APICompatibleMessage,
+     AssistantMessage,
+@@ -28,7 +36,9 @@ In each turn you can either:
+ - Make a tool call.
+ You cannot do both at the same time.
+ 
+-Try to be helpful and always follow the policy. Always make sure you generate valid JSON only.
++Try to be helpful and always follow the policy. When making a tool call, provide valid
++JSON arguments for that tool. When replying to the user, respond in natural language;
++do not wrap the reply in JSON or invent a tool named `json`.
+ """.strip()
+ 
+ SYSTEM_PROMPT = """
+@@ -40,6 +50,17 @@ SYSTEM_PROMPT = """
+ </policy>
+ """.strip()
+ 
++VERIFIER_REVISION_PROMPT = """
++Your immediately preceding proposed response was not committed or shown to the
++customer. Revise it using the verifier feedback below. Generate a complete
++replacement response or tool call that follows the policy and is grounded in
++the existing conversation and tool results. Do not mention the verifier,
++feedback, rejection, or an internal revision process to the customer.
++
++Verifier feedback:
++{feedback}
++""".strip()
++
+ 
+ class LLMAgentState(BaseModel):
+     """The state of the agent."""
+@@ -64,9 +85,19 @@ class LLMAgent(
+         domain_policy: str,
+         llm: str,
+         llm_args: Optional[dict] = None,
++        pre_verifier: Optional[str] = None,
++        pre_verifier_llm: Optional[str] = None,
++        pre_verifier_llm_args: Optional[dict] = None,
+     ):
+         """
+         Initialize the LLMAgent.
++
++        Args:
++            pre_verifier: Optional pre-verifier rule ("v1" or "v2") applied to
++                the copy of the request sent to the model. None disables it.
++            pre_verifier_llm: Model for rule v2's tool selection. None uses the
++                agent's model and arguments.
++            pre_verifier_llm_args: Arguments for ``pre_verifier_llm``.
+         """
+         super().__init__(
+             tools=tools,
+@@ -74,6 +105,13 @@ class LLMAgent(
+             llm=llm,
+             llm_args=llm_args,
+         )
++        if pre_verifier is not None and pre_verifier not in PRE_VERIFIER_RULES:
++            raise ValueError(f"Unknown pre-verifier rule: {pre_verifier}")
++        self.pre_verifier = pre_verifier
++        self.pre_verifier_llm = pre_verifier_llm
++        self.pre_verifier_llm_args = dict(pre_verifier_llm_args or {})
++        self._pre_verifier_records: list[PreVerifierRecord] = []
++        self._in_verifier_revision = False
+ 
+     @property
+     def system_prompt(self) -> str:
+@@ -81,6 +119,17 @@ class LLMAgent(
+             domain_policy=self.domain_policy, agent_instruction=AGENT_INSTRUCTION
+         )
+ 
++    def set_seed(self, seed: int):
++        """Set the seed for the agent's model and, if set, the rule v2 model."""
++        super().set_seed(seed)
++        if self.pre_verifier_llm is not None:
++            cur_seed = self.pre_verifier_llm_args.get("seed", None)
++            if cur_seed is not None:
++                logger.warning(
++                    f"Pre-verifier seed is already set to {cur_seed}, resetting it to {seed}"
++                )
++            self.pre_verifier_llm_args["seed"] = seed
++
+     def get_init_state(
+         self, message_history: Optional[list[Message]] = None
+     ) -> LLMAgentStateType:
+@@ -112,6 +161,35 @@ class LLMAgent(
+         state.messages.append(assistant_message)
+         return assistant_message, state
+ 
++    def generate_next_message_with_verifier_feedback(
++        self,
++        message: ValidAgentInputMessage,
++        state: LLMAgentStateType,
++        feedback: str,
++    ) -> tuple[AssistantMessage, LLMAgentStateType]:
++        """Generate a replacement without persisting verifier feedback in history.
++
++        The feedback is an agent-only, transient system instruction. The returned
++        state contains the real inbound message and replacement response, but not
++        the rejected proposal or the verifier feedback.
++        """
++        feedback_message = SystemMessage(
++            role="system",
++            content=VERIFIER_REVISION_PROMPT.format(feedback=feedback),
++        )
++        state.system_messages.append(feedback_message)
++        self._in_verifier_revision = True
++        try:
++            return self.generate_next_message(message, state)
++        finally:
++            self._in_verifier_revision = False
++            state.system_messages.pop()
++
++    def pop_pre_verifier_records(self) -> list[PreVerifierRecord]:
++        """Return and clear the pre-verifier records made since the last call."""
++        records, self._pre_verifier_records = self._pre_verifier_records, []
++        return records
++
+     def _generate_next_message(
+         self, message: ValidAgentInputMessage, state: LLMAgentStateType
+     ) -> AssistantMessage:
+@@ -125,13 +203,37 @@ class LLMAgent(
+         else:
+             state.messages.append(message)
+         messages = state.system_messages + state.messages
++        tools = self.tools
++        record = None
++        if self.pre_verifier is not None:
++            # Only the copy sent to the model changes; state.messages keeps everything.
++            messages, tools, record = prepare(
++                messages, self.tools, self.domain_policy, rule=self.pre_verifier
++            )
++            if self.pre_verifier == "v2" and self._in_verifier_revision:
++                # The selector cannot see the verifier's feedback and could hide
++                # the tool it asks for, so the replacement gets the v1 set.
++                if selection_candidates(tools, record):
++                    record.model_skipped = "verifier_revision"
++            elif self.pre_verifier == "v2":
++                if self.pre_verifier_llm is None:
++                    llm, llm_args = self.llm, self.llm_args
++                else:
++                    llm, llm_args = self.pre_verifier_llm, self.pre_verifier_llm_args
++                tools = select_order_tools(
++                    messages, tools, record, llm=llm, llm_args=llm_args
++                )
++            record.revision = self._in_verifier_revision
++            self._pre_verifier_records.append(record)
+         assistant_message = generate(
+             model=self.llm,
+-            tools=self.tools,
++            tools=tools,
+             messages=messages,
+             call_name="agent_response",
+             **self.llm_args,
+         )
++        if record is not None:
++            mark_called_removed_tools(record, assistant_message)
+         return assistant_message
+ 
+ 
+@@ -147,7 +249,9 @@ In each turn you can either:
+ - Make a tool call.
+ You cannot do both at the same time.
+ 
+-Try to be helpful and always follow the policy. Always make sure you generate valid JSON only.
++Try to be helpful and always follow the policy. When making a tool call, provide valid
++JSON arguments for that tool. When replying to the user, respond in natural language;
++do not wrap the reply in JSON or invent a tool named `json`.
+ """.strip()
+ 
+ SYSTEM_PROMPT_GT = """
+@@ -495,12 +599,18 @@ def create_llm_agent(tools, domain_policy, **kwargs):
+         **kwargs: Additional arguments. Supports:
+             - llm (str): LLM model name.
+             - llm_args (dict): Additional LLM arguments.
++            - pre_verifier (str): Optional pre-verifier rule ("v1" or "v2").
++            - pre_verifier_llm (str): Optional model for rule v2.
++            - pre_verifier_llm_args (dict): Arguments for pre_verifier_llm.
+     """
+     return LLMAgent(
+         tools=tools,
+         domain_policy=domain_policy,
+         llm=kwargs.get("llm"),
+         llm_args=kwargs.get("llm_args"),
++        pre_verifier=kwargs.get("pre_verifier"),
++        pre_verifier_llm=kwargs.get("pre_verifier_llm"),
++        pre_verifier_llm_args=kwargs.get("pre_verifier_llm_args"),
+     )
+ 
+ 
+diff --git a/src/tau2/cli.py b/src/tau2/cli.py
+index 6193854646ce5454bde5250ea53aac56ca816d3d..81d222af24403cdc4e6987d9796d96ff3612a228 100644
+--- a/src/tau2/cli.py
++++ b/src/tau2/cli.py
+@@ -8,10 +8,10 @@ from tau2.config import (
+     DEFAULT_INTEGRATION_DURATION_SECONDS,
+     DEFAULT_INTERRUPTION_CHECK_INTERVAL_SECONDS,
+     DEFAULT_LLM_AGENT,
++    DEFAULT_LLM_ARGS_AGENT,
++    DEFAULT_LLM_ARGS_USER,
+     DEFAULT_LLM_EVAL_USER_SIMULATOR,
+     DEFAULT_LLM_LOG_MODE,
+-    DEFAULT_LLM_TEMPERATURE_AGENT,
+-    DEFAULT_LLM_TEMPERATURE_USER,
+     DEFAULT_LLM_USER,
+     DEFAULT_LOG_LEVEL,
+     DEFAULT_MAX_CONCURRENCY,
+@@ -80,8 +80,8 @@ def add_run_args(parser):
+     parser.add_argument(
+         "--agent-llm-args",
+         type=json.loads,
+-        default={"temperature": DEFAULT_LLM_TEMPERATURE_AGENT},
+-        help=f"The arguments to pass to the LLM for the agent. Default is '{{\"temperature\": {DEFAULT_LLM_TEMPERATURE_AGENT}}}'.",
++        default=DEFAULT_LLM_ARGS_AGENT,
++        help=f"The arguments to pass to the LLM for the agent. Default is {DEFAULT_LLM_ARGS_AGENT}.",
+     )
+     parser.add_argument(
+         "--user",
+@@ -99,8 +99,8 @@ def add_run_args(parser):
+     parser.add_argument(
+         "--user-llm-args",
+         type=json.loads,
+-        default={"temperature": DEFAULT_LLM_TEMPERATURE_USER},
+-        help=f"The arguments to pass to the LLM for the user. Default is '{{\"temperature\": {DEFAULT_LLM_TEMPERATURE_USER}}}'.",
++        default=DEFAULT_LLM_ARGS_USER,
++        help=f"The arguments to pass to the LLM for the user. Default is {DEFAULT_LLM_ARGS_USER}.",
+     )
+     parser.add_argument(
+         "--task-set-name",
+@@ -236,6 +236,45 @@ def add_run_args(parser):
+         default=False,
+         help="Enforce communication protocol rules (e.g., no mixed messages with text and tool calls). Default is False.",
+     )
++    parser.add_argument(
++        "--verifier-model",
++        type=str,
++        default=None,
++        help="Verify every text-agent output before commit using this LLM model.",
++    )
++    parser.add_argument(
++        "--verifier-llm-args",
++        type=json.loads,
++        default={},
++        help="JSON arguments passed to the online verifier LLM.",
++    )
++    parser.add_argument(
++        "--verifier-max-revisions",
++        type=int,
++        default=1,
++        help="Maximum verifier-directed replacement proposals per agent turn. Default is 1.",
++    )
++    parser.add_argument(
++        "--pre-verifier",
++        type=str,
++        choices=["v1", "v2"],
++        default=None,
++        help="Pre-verifier rule applied to each agent request before the model "
++        "call (llm_agent only). v1 is deterministic; v2 adds one model call to "
++        "narrow order write tools. Default is off.",
++    )
++    parser.add_argument(
++        "--pre-verifier-model",
++        type=str,
++        default=None,
++        help="Model for pre-verifier rule v2. Default is the agent's model and arguments.",
++    )
++    parser.add_argument(
++        "--pre-verifier-llm-args",
++        type=json.loads,
++        default={},
++        help="JSON arguments passed to the pre-verifier model (rule v2).",
++    )
+     parser.add_argument(
+         "--user-persona",
+         type=json.loads,
+@@ -714,6 +753,12 @@ def main():
+                 user=args.user,
+                 max_steps=args.max_steps,
+                 enforce_communication_protocol=args.enforce_communication_protocol,
++                verifier_model=args.verifier_model,
++                verifier_llm_args=args.verifier_llm_args,
++                verifier_max_revisions=args.verifier_max_revisions,
++                pre_verifier=args.pre_verifier,
++                pre_verifier_model=args.pre_verifier_model,
++                pre_verifier_llm_args=args.pre_verifier_llm_args,
+             )
+ 
+         return run_domain(config)
+diff --git a/src/tau2/config.py b/src/tau2/config.py
+index c285d64835dc508b147b11a8e126e7c30dfc17d3..c239853e98e2ba6456cdce2dc58c23438bd998ba 100644
+--- a/src/tau2/config.py
++++ b/src/tau2/config.py
+@@ -14,12 +14,20 @@ DEFAULT_LOG_LEVEL = "ERROR"
+ # =============================================================================
+ DEFAULT_AGENT_IMPLEMENTATION = "llm_agent"
+ DEFAULT_USER_IMPLEMENTATION = "user_simulator"
+-DEFAULT_LLM_AGENT = "gpt-4.1-2025-04-14"
+-DEFAULT_LLM_USER = "gpt-4.1-2025-04-14"
++DEFAULT_OLLAMA_MODEL = "qwen3.5:latest"
++DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11435"
++DEFAULT_LLM_AGENT = f"ollama_chat/{DEFAULT_OLLAMA_MODEL}"
++DEFAULT_LLM_USER = f"ollama_chat/{DEFAULT_OLLAMA_MODEL}"
+ DEFAULT_LLM_TEMPERATURE_AGENT = 0.0
+ DEFAULT_LLM_TEMPERATURE_USER = 0.0
+-DEFAULT_LLM_ARGS_AGENT = {"temperature": DEFAULT_LLM_TEMPERATURE_AGENT}
+-DEFAULT_LLM_ARGS_USER = {"temperature": DEFAULT_LLM_TEMPERATURE_USER}
++DEFAULT_LLM_ARGS_AGENT = {
++    "temperature": DEFAULT_LLM_TEMPERATURE_AGENT,
++    "api_base": DEFAULT_OLLAMA_BASE_URL,
++}
++DEFAULT_LLM_ARGS_USER = {
++    "temperature": DEFAULT_LLM_TEMPERATURE_USER,
++    "api_base": DEFAULT_OLLAMA_BASE_URL,
++}
+ 
+ DEFAULT_LLM_NL_ASSERTIONS = "gpt-4.1-2025-04-14"
+ DEFAULT_LLM_NL_ASSERTIONS_TEMPERATURE = 0.0
+@@ -38,6 +46,9 @@ DEFAULT_LLM_LOG_MODE = "latest"  # Options: "all", "latest"
+ # LLM INFRASTRUCTURE (fixed operational constants)
+ # =============================================================================
+ DEFAULT_MAX_RETRIES = 3
++# Ollama otherwise defaults to a 4K context window, which is too small for
++# domain policies plus tool schemas in domains such as retail.
++DEFAULT_OLLAMA_NUM_CTX = 8192
+ DEFAULT_RETRY_ATTEMPTS = 3
+ DEFAULT_RETRY_MIN_WAIT = 1.0  # seconds
+ DEFAULT_RETRY_MAX_WAIT = 10.0  # seconds
+diff --git a/src/tau2/data_model/simulation.py b/src/tau2/data_model/simulation.py
+index 8c23c353ec48209d70554bcfe46c36e2415c7e85..34362abad9ec2879207a2f2a569ff87affbb1bc9 100644
+--- a/src/tau2/data_model/simulation.py
++++ b/src/tau2/data_model/simulation.py
+@@ -587,6 +587,53 @@ class TextRunConfig(BaseRunConfig):
+             default_factory=lambda: deepcopy(DEFAULT_LLM_ARGS_AGENT),
+         ),
+     ]
++    verifier_model: Annotated[
++        Optional[str],
++        Field(
++            description="Optional LLM model used to verify every agent output before commit.",
++            default=None,
++        ),
++    ]
++    verifier_llm_args: Annotated[
++        dict,
++        Field(
++            description="Arguments passed to the online verifier LLM.",
++            default_factory=dict,
++        ),
++    ]
++    verifier_max_revisions: Annotated[
++        int,
++        Field(
++            description="Maximum verifier-directed replacement proposals per agent turn.",
++            default=1,
++            ge=0,
++        ),
++    ]
++    pre_verifier: Annotated[
++        Optional[Literal["v1", "v2"]],
++        Field(
++            description=(
++                "Optional pre-verifier rule applied to the copy of each agent "
++                "request before the model call (llm_agent only). v1 is "
++                "deterministic; v2 adds one model call to narrow order write tools."
++            ),
++            default=None,
++        ),
++    ]
++    pre_verifier_model: Annotated[
++        Optional[str],
++        Field(
++            description="Model for pre-verifier rule v2. None uses the agent's model.",
++            default=None,
++        ),
++    ]
++    pre_verifier_llm_args: Annotated[
++        dict,
++        Field(
++            description="Arguments passed to the pre-verifier model (rule v2).",
++            default_factory=dict,
++        ),
++    ]
+ 
+     # ---- User ----
+     user: Annotated[
+@@ -1214,6 +1261,17 @@ class AgentInfo(BaseModel):
+     llm_args: Optional[dict] = Field(
+         description="The arguments to pass to the LLM for the agent.", default=None
+     )
++    pre_verifier: Optional[str] = Field(
++        description="The pre-verifier rule used by the agent, if any.", default=None
++    )
++    pre_verifier_model: Optional[str] = Field(
++        description="The model set for pre-verifier rule v2, if any (None uses the agent's model).",
++        default=None,
++    )
++    pre_verifier_llm_args: Optional[dict] = Field(
++        description="The arguments set for the pre-verifier rule v2 model, if any.",
++        default=None,
++    )
+     voice_settings: Optional[VoiceSettings] = Field(
+         description="Voice synthesis and transcription settings for the agent",
+         default=None,
+@@ -1289,6 +1347,7 @@ class TerminationReason(str, Enum):
+     INFRASTRUCTURE_ERROR = "infrastructure_error"  # Task failed due to infrastructure (e.g., API disconnect)
+     CONTEXT_WINDOW_EXCEEDED = "context_window_exceeded"
+     UNEXPECTED_ERROR = "unexpected_error"
++    VERIFIER_REJECTED = "verifier_rejected"
+ 
+ 
+ class SimulationRun(BaseModel):
+diff --git a/src/tau2/data_model/tasks.py b/src/tau2/data_model/tasks.py
+index 28f37885f0282bd3b82eed18bfe8aa2350fba2b7..a5e2752b7e3448b57be2549cca2f52c7406ea6c5 100644
+--- a/src/tau2/data_model/tasks.py
++++ b/src/tau2/data_model/tasks.py
+@@ -156,6 +156,14 @@ class Action(BaseModel):
+         description="The arguments to check in tool call. If None, will check all the arguments.",
+         default=None,
+     )
++    after_user_turn: Optional[int] = Field(
++        description=(
++            "When set, the matching tool call must occur after at least this many "
++            "user messages. Useful for revalidation after a follow-up request."
++        ),
++        default=None,
++        ge=0,
++    )
+ 
+     def __str__(self) -> str:
+         lines = []
+@@ -363,6 +371,15 @@ class TaskIssue(BaseModel):
+         return "\n".join(lines)
+ 
+ 
++class StockAnswerAssertion(BaseModel):
++    """Language-independent numerical requirements for a stock answer."""
++
++    requested_quantity: int = Field(gt=0)
++    expected_available_quantity: int = Field(ge=0)
++    require_shortfall: bool = True
++    forbid_commitment_claims: bool = True
++
++
+ class EvaluationCriteria(BaseModel):
+     """
+     Evaluation criteria for a task. Sent to the evaluator.
+@@ -412,6 +429,69 @@ class EvaluationCriteria(BaseModel):
+         ),
+     ]
+ 
++    forbidden_communicate_info: Annotated[
++        Optional[list[str]],
++        Field(
++            description=(
++                "Strings the agent must not say to the user (case-insensitive "
++                "substring match). Evaluated as part of COMMUNICATE."
++            ),
++            default=None,
++        ),
++    ]
++
++    communicate_info_any: Annotated[
++        Optional[list[list[str]]],
++        Field(
++            description=(
++                "Groups of alternative strings, one of which must be communicated "
++                "for each group. Evaluated as part of COMMUNICATE."
++            ),
++            default=None,
++        ),
++    ]
++
++    final_communicate_info: Annotated[
++        Optional[list[str]],
++        Field(
++            description=(
++                "Strings that must occur in an assistant reply after the final "
++                "tool result. This binds claims to the latest evidence."
++            ),
++            default=None,
++        ),
++    ]
++
++    final_communicate_info_any: Annotated[
++        Optional[list[list[str]]],
++        Field(
++            description=(
++                "Alternative expressions required after the final tool result."
++            ),
++            default=None,
++        ),
++    ]
++
++    final_forbidden_communicate_info: Annotated[
++        Optional[list[str]],
++        Field(
++            description="Forbidden claims in assistant replies after the final tool result.",
++            default=None,
++        ),
++    ]
++
++    stock_answer_assertion: Annotated[
++        Optional[StockAnswerAssertion],
++        Field(
++            description=(
++                "Deterministically checks that the final answer is grounded in "
++                "the latest stock tool result and communicates the requested, "
++                "available, and shortfall quantities."
++            ),
++            default=None,
++        ),
++    ]
++
+     nl_assertions: Annotated[
+         Optional[list[str]],
+         Field(
+@@ -456,6 +536,22 @@ class EvaluationCriteria(BaseModel):
+             lines.extend(
+                 [textwrap.indent(info, "\t") for info in self.communicate_info]
+             )
++        if self.forbidden_communicate_info is not None:
++            lines.append("Forbidden Communicate Info:")
++            lines.extend(
++                [
++                    textwrap.indent(info, "\t")
++                    for info in self.forbidden_communicate_info
++                ]
++            )
++        if self.communicate_info_any is not None:
++            lines.append("Communicate Info (Any):")
++            lines.extend(
++                [
++                    textwrap.indent(str(group), "\t")
++                    for group in self.communicate_info_any
++                ]
++            )
+         if self.nl_assertions is not None:
+             lines.append("NL Assertions:")
+             lines.extend(
+diff --git a/src/tau2/evaluator/evaluator_action.py b/src/tau2/evaluator/evaluator_action.py
+index 861784876aab7f0f2bf16685b8607b50f9873fd5..9935e598da829c00bd3e4952b767733aa7c88763 100644
+--- a/src/tau2/evaluator/evaluator_action.py
++++ b/src/tau2/evaluator/evaluator_action.py
+@@ -17,6 +17,7 @@ def _check_actions(
+     predicted_tool_calls: list[ToolCall],
+     golden_actions: list[Action],
+     tool_types: Optional[dict[str, ToolType]] = None,
++    user_turn_counts: Optional[list[int]] = None,
+ ) -> list[ActionCheck]:
+     """
+     Check if all the gold actions are in the predicted tool calls.
+@@ -30,11 +31,21 @@ def _check_actions(
+         List of ActionCheck results for each golden action.
+     """
+     action_checks = []
++    unmatched_indexes = set(range(len(predicted_tool_calls)))
+     for gold_action in golden_actions:
+         found = False
+-        for pred_tool_call in predicted_tool_calls:
++        for index, pred_tool_call in enumerate(predicted_tool_calls):
++            if index not in unmatched_indexes:
++                continue
++            if (
++                gold_action.after_user_turn is not None
++                and user_turn_counts is not None
++                and user_turn_counts[index] < gold_action.after_user_turn
++            ):
++                continue
+             if gold_action.compare_with_tool_call(pred_tool_call):
+                 found = True
++                unmatched_indexes.remove(index)
+                 break
+         if found:
+             gold_action_reward = 1.0
+@@ -128,6 +139,26 @@ class ActionEvaluator(EvaluatorBase[Message]):
+                 tool_calls.extend(message.tool_calls)
+         return tool_calls
+ 
++    @classmethod
++    def extract_tool_calls_with_user_turn_counts(
++        cls, full_trajectory: list[Message]
++    ) -> tuple[list[ToolCall], list[int]]:
++        """Extract tool calls and the number of preceding user messages."""
++
++        tool_calls: list[ToolCall] = []
++        user_turn_counts: list[int] = []
++        user_turns = 0
++        for message in full_trajectory:
++            if isinstance(message, UserMessage) and not message.is_tool_call():
++                user_turns += 1
++            if (
++                isinstance(message, (AssistantMessage, UserMessage))
++                and message.is_tool_call()
++            ):
++                tool_calls.extend(message.tool_calls)
++                user_turn_counts.extend([user_turns] * len(message.tool_calls))
++        return tool_calls, user_turn_counts
++
+     @classmethod
+     def evaluate_actions(
+         cls,
+@@ -146,8 +177,15 @@ class ActionEvaluator(EvaluatorBase[Message]):
+         if len(golden_actions) == 0:
+             return []
+ 
+-        predicted_tool_calls = cls.extract_tool_calls(full_trajectory)
+-        return _check_actions(predicted_tool_calls, golden_actions, tool_types)
++        predicted_tool_calls, user_turn_counts = (
++            cls.extract_tool_calls_with_user_turn_counts(full_trajectory)
++        )
++        return _check_actions(
++            predicted_tool_calls,
++            golden_actions,
++            tool_types,
++            user_turn_counts=user_turn_counts,
++        )
+ 
+ 
+ class FullDuplexActionEvaluator(EvaluatorBase[Tick]):
+diff --git a/src/tau2/evaluator/evaluator_communicate.py b/src/tau2/evaluator/evaluator_communicate.py
+index 1bac18fd8830304894da767d2e6b7efe6e779e89..c4baf3bf763de58b02898037e35cd99a9cea5a1f 100644
+--- a/src/tau2/evaluator/evaluator_communicate.py
++++ b/src/tau2/evaluator/evaluator_communicate.py
+@@ -1,6 +1,9 @@
+-from tau2.data_model.message import AssistantMessage, Message, Tick
++import json
++import re
++
++from tau2.data_model.message import AssistantMessage, Message, Tick, ToolMessage
+ from tau2.data_model.simulation import CommunicateCheck, RewardInfo
+-from tau2.data_model.tasks import RewardType, Task
++from tau2.data_model.tasks import RewardType, StockAnswerAssertion, Task
+ from tau2.evaluator.evaluator_base import EvaluatorBase
+ 
+ 
+@@ -24,8 +27,26 @@ class CommunicateEvaluator(EvaluatorBase[Message]):
+                 info={"notes": "No evaluation criteria"},
+                 reward_breakdown={RewardType.COMMUNICATE: 1.0},
+             )
+-        communicate_info = task.evaluation_criteria.communicate_info
+-        if not communicate_info:
++        communicate_info = task.evaluation_criteria.communicate_info or []
++        forbidden_info = task.evaluation_criteria.forbidden_communicate_info or []
++        communicate_any = task.evaluation_criteria.communicate_info_any or []
++        final_info = task.evaluation_criteria.final_communicate_info or []
++        final_any = task.evaluation_criteria.final_communicate_info_any or []
++        final_forbidden = (
++            task.evaluation_criteria.final_forbidden_communicate_info or []
++        )
++        stock_assertion = task.evaluation_criteria.stock_answer_assertion
++        if not any(
++            [
++                communicate_info,
++                forbidden_info,
++                communicate_any,
++                final_info,
++                final_any,
++                final_forbidden,
++                stock_assertion,
++            ]
++        ):
+             return RewardInfo(
+                 reward=1.0,
+                 info={"note": "No communicate_info to evaluate"},
+@@ -35,6 +56,26 @@ class CommunicateEvaluator(EvaluatorBase[Message]):
+         communicate_info_checks = cls.evaluate_communicate_info(
+             full_trajectory, communicate_info
+         )
++        communicate_info_checks.extend(
++            cls.evaluate_forbidden_communicate_info(full_trajectory, forbidden_info)
++        )
++        communicate_info_checks.extend(
++            cls.evaluate_communicate_info_any(full_trajectory, communicate_any)
++        )
++        final_trajectory = cls.after_final_tool_result(full_trajectory)
++        communicate_info_checks.extend(
++            cls.evaluate_communicate_info(final_trajectory, final_info)
++        )
++        communicate_info_checks.extend(
++            cls.evaluate_communicate_info_any(final_trajectory, final_any)
++        )
++        communicate_info_checks.extend(
++            cls.evaluate_forbidden_communicate_info(final_trajectory, final_forbidden)
++        )
++        if stock_assertion is not None:
++            communicate_info_checks.extend(
++                cls.evaluate_stock_answer(full_trajectory, stock_assertion)
++            )
+ 
+         # Calculate reward: 1 if all expectations are met, 0 otherwise
+         all_expectations_met = all(result.met for result in communicate_info_checks)
+@@ -46,6 +87,137 @@ class CommunicateEvaluator(EvaluatorBase[Message]):
+             reward_breakdown={RewardType.COMMUNICATE: reward},
+         )
+ 
++    @staticmethod
++    def after_final_tool_result(full_trajectory: list[Message]) -> list[Message]:
++        """Return only messages after the latest assistant tool result."""
++
++        last_tool_index = -1
++        for index, message in enumerate(full_trajectory):
++            if isinstance(message, ToolMessage) and message.requestor == "assistant":
++                last_tool_index = index
++        return full_trajectory[last_tool_index + 1 :]
++
++    @classmethod
++    def evaluate_stock_answer(
++        cls,
++        full_trajectory: list[Message],
++        assertion: StockAnswerAssertion,
++    ) -> list[CommunicateCheck]:
++        """Check latest stock evidence and its final numerical communication.
++
++        This deliberately does not require an English insufficiency phrase. The
++        requested, available, and shortfall quantities form a language-independent
++        factual triple, while forbidden commitment checks remain separate.
++        """
++
++        latest_stock = None
++        latest_tool_index = -1
++        earlier_quantities: set[int] = set()
++        for index, message in enumerate(full_trajectory):
++            if not isinstance(message, ToolMessage) or not message.content:
++                continue
++            try:
++                payload = json.loads(message.content)
++            except (json.JSONDecodeError, TypeError):
++                continue
++            quantity = payload.get("stock_quantity")
++            if not isinstance(quantity, int):
++                continue
++            if latest_stock is not None:
++                earlier_quantities.add(latest_stock)
++            latest_stock = quantity
++            latest_tool_index = index
++
++        evidence_met = latest_stock == assertion.expected_available_quantity
++        evidence_check = CommunicateCheck(
++            info="latest stock evidence",
++            met=evidence_met,
++            justification=(
++                f"Latest stock tool result reports {latest_stock}."
++                if latest_stock is not None
++                else "No parseable stock tool result was recorded."
++            ),
++        )
++
++        final_text = "\n".join(
++            message.content
++            for message in full_trajectory[latest_tool_index + 1 :]
++            if isinstance(message, AssistantMessage) and message.has_text_content()
++        )
++        communicated_numbers = {
++            int(value) for value in re.findall(r"(?<!\d)\d+(?!\d)", final_text)
++        }
++        required_numbers = {
++            assertion.requested_quantity,
++            assertion.expected_available_quantity,
++        }
++        if assertion.require_shortfall:
++            required_numbers.add(
++                assertion.requested_quantity - assertion.expected_available_quantity
++            )
++        stale_quantities = earlier_quantities - required_numbers
++        facts_met = required_numbers <= communicated_numbers and not (
++            stale_quantities & communicated_numbers
++        )
++        facts_check = CommunicateCheck(
++            info="final stock quantities",
++            met=facts_met,
++            justification=(
++                f"Required quantities {sorted(required_numbers)}; final reply "
++                f"communicated {sorted(communicated_numbers)}; disallowed stale "
++                f"quantities present {sorted(stale_quantities & communicated_numbers)}."
++            ),
++        )
++        checks = [evidence_check, facts_check]
++        if assertion.forbid_commitment_claims:
++            commitment_patterns = [
++                r"\b(?:i|we)(?:'ve| have)?\s+(?:now\s+)?reserved\b",
++                r"\b(?:i|we)(?:'ve| have)?\s+set aside\b",
++                r"\b(?:i|we)(?:'ve| have)?\s+placed (?:the |your )?order\b",
++                r"\breservation (?:is|has been) confirmed\b",
++                r"\border (?:is|has been) placed\b",
++            ]
++            matched_claims = [
++                pattern
++                for pattern in commitment_patterns
++                if re.search(pattern, final_text.lower())
++            ]
++            checks.append(
++                CommunicateCheck(
++                    info="no completed reservation or order claim",
++                    met=not matched_claims,
++                    justification=(
++                        "No affirmative completed reservation/order claim found."
++                        if not matched_claims
++                        else f"Matched commitment claim patterns: {matched_claims}."
++                    ),
++                )
++            )
++        if assertion.expected_available_quantity < assertion.requested_quantity:
++            requested = assertion.requested_quantity
++            contradiction_patterns = [
++                rf"\bcan supply (?:all )?{requested}\b",
++                rf"\ball {requested}(?:\s+\w+){{0,3}}\s+available\b",
++                rf"\b{requested}(?:\s+\w+){{0,3}}\s+in stock\b",
++            ]
++            contradictions = [
++                pattern
++                for pattern in contradiction_patterns
++                if re.search(pattern, final_text.lower())
++            ]
++            checks.append(
++                CommunicateCheck(
++                    info="no contradictory sufficient-supply claim",
++                    met=not contradictions,
++                    justification=(
++                        "No affirmative sufficient-supply contradiction found."
++                        if not contradictions
++                        else f"Matched contradictory claim patterns: {contradictions}."
++                    ),
++                )
++            )
++        return checks
++
+     @classmethod
+     def evaluate_communicate_info(
+         cls,
+@@ -86,6 +258,61 @@ class CommunicateEvaluator(EvaluatorBase[Message]):
+             )
+         return outputs
+ 
++    @classmethod
++    def evaluate_forbidden_communicate_info(
++        cls,
++        full_trajectory: list[Message],
++        forbidden_info: list[str],
++    ) -> list[CommunicateCheck]:
++        """Check that forbidden claims do not occur in assistant text."""
++
++        assistant_text = "\n".join(
++            message.content
++            for message in full_trajectory
++            if isinstance(message, AssistantMessage) and message.has_text_content()
++        ).lower()
++        return [
++            CommunicateCheck(
++                info=f"must not communicate: {info}",
++                met=info.lower() not in assistant_text,
++                justification=(
++                    f"Forbidden information '{info}' was not communicated."
++                    if info.lower() not in assistant_text
++                    else f"Forbidden information '{info}' was communicated."
++                ),
++            )
++            for info in forbidden_info
++        ]
++
++    @classmethod
++    def evaluate_communicate_info_any(
++        cls,
++        full_trajectory: list[Message],
++        communicate_any: list[list[str]],
++    ) -> list[CommunicateCheck]:
++        """Check that at least one alternative from each group was communicated."""
++
++        assistant_text = "\n".join(
++            message.content
++            for message in full_trajectory
++            if isinstance(message, AssistantMessage) and message.has_text_content()
++        ).lower()
++        checks = []
++        for alternatives in communicate_any:
++            met = any(value.lower() in assistant_text for value in alternatives)
++            checks.append(
++                CommunicateCheck(
++                    info=f"one of: {', '.join(alternatives)}",
++                    met=met,
++                    justification=(
++                        f"At least one alternative was communicated: {alternatives}."
++                        if met
++                        else f"No alternative was communicated: {alternatives}."
++                    ),
++                )
++            )
++        return checks
++
+ 
+ class FullDuplexCommunicateEvaluator(EvaluatorBase[Tick]):
+     @classmethod
+@@ -166,8 +393,10 @@ class FullDuplexCommunicateEvaluator(EvaluatorBase[Tick]):
+                 info={"notes": "No evaluation criteria"},
+                 reward_breakdown={RewardType.COMMUNICATE: 1.0},
+             )
+-        communicate_info = task.evaluation_criteria.communicate_info
+-        if not communicate_info:
++        communicate_info = task.evaluation_criteria.communicate_info or []
++        forbidden_info = task.evaluation_criteria.forbidden_communicate_info or []
++        communicate_any = task.evaluation_criteria.communicate_info_any or []
++        if not communicate_info and not forbidden_info and not communicate_any:
+             return RewardInfo(
+                 reward=1.0,
+                 info={"note": "No communicate_info to evaluate"},
+@@ -180,6 +409,16 @@ class FullDuplexCommunicateEvaluator(EvaluatorBase[Tick]):
+         communicate_info_checks = cls.evaluate_communicate_info(
+             agent_messages, communicate_info
+         )
++        communicate_info_checks.extend(
++            CommunicateEvaluator.evaluate_forbidden_communicate_info(
++                agent_messages, forbidden_info
++            )
++        )
++        communicate_info_checks.extend(
++            CommunicateEvaluator.evaluate_communicate_info_any(
++                agent_messages, communicate_any
++            )
++        )
+ 
+         # Calculate reward: 1 if all expectations are met, 0 otherwise
+         all_expectations_met = all(result.met for result in communicate_info_checks)
+diff --git a/src/tau2/orchestrator/orchestrator.py b/src/tau2/orchestrator/orchestrator.py
+index da030140af392038aef48b149cd22607e600269d..466e3385a2ab061942b4754d1de6b595d9e76ae7 100644
+--- a/src/tau2/orchestrator/orchestrator.py
++++ b/src/tau2/orchestrator/orchestrator.py
+@@ -16,6 +16,7 @@ from tau2.agent.base_agent import (
+     is_valid_agent_history_message,
+ )
+ from tau2.agent.llm_agent import LLMSoloAgent
++from tau2.agent.pre_verifier import PreVerifierRecord, summarize_records
+ from tau2.data_model.message import (
+     AssistantMessage,
+     Message,
+@@ -36,6 +37,8 @@ from tau2.user.user_simulator_base import (
+ )
+ from tau2.utils.llm_utils import get_cost
+ from tau2.utils.utils import format_time, get_now
++from tau2.verifier.base import Verifier
++from tau2.verifier.models import VerifierDecision, VerifierRecord
+ 
+ 
+ class Role(str, Enum):
+@@ -405,6 +408,8 @@ class Orchestrator(BaseOrchestrator[AgentT, UserT, Message]):
+         simulation_id: Optional[str] = None,
+         validate_communication: bool = False,
+         timeout: Optional[float] = None,
++        verifier: Optional[Verifier] = None,
++        verifier_max_revisions: int = 1,
+     ):
+         """
+         Initialize the Orchestrator for managing simulation between Agent, User, and Environment.
+@@ -428,6 +433,9 @@ class Orchestrator(BaseOrchestrator[AgentT, UserT, Message]):
+             validate_communication: If True, validates communication protocol rules (e.g., no mixed
+                                    messages with both text and tool calls). Defaults to False.
+             timeout: Maximum wallclock time in seconds. None means no timeout.
++            verifier: Optional online verifier for transactional agent outputs.
++            verifier_max_revisions: Maximum verifier-directed replacement proposals
++                before rejecting an agent turn. Only used when verifier is set.
+         """
+         # Initialize base class
+         super().__init__(
+@@ -448,6 +456,10 @@ class Orchestrator(BaseOrchestrator[AgentT, UserT, Message]):
+         self.trajectory: list[Message] = []
+         self.solo_mode = solo_mode
+         self.validate_communication = validate_communication
++        self.verifier = verifier
++        self.verifier_max_revisions = verifier_max_revisions
++        self.verifier_records: list[VerifierRecord] = []
++        self.pre_verifier_records: list[PreVerifierRecord] = []
+ 
+         # Turn-based routing state
+         self.from_role: Optional[Role] = None
+@@ -641,6 +653,7 @@ class Orchestrator(BaseOrchestrator[AgentT, UserT, Message]):
+                 first_message, self.agent_state = self.agent.generate_next_message(
+                     None, self.agent_state
+                 )
++                self._collect_pre_verifier_records(revision_attempt=0)
+                 self.trajectory = [first_message]
+                 self.message = first_message
+                 # In solo mode, there is no user, so if the message is not a tool call, then we end and report an agent error
+@@ -813,9 +826,48 @@ class Orchestrator(BaseOrchestrator[AgentT, UserT, Message]):
+             seed=self.seed,
+             mode=self.mode.value,
+             speech_environment=speech_environment,
++            info=self._build_verifier_info(),
+         )
+         return simulation_run
+ 
++    def _build_verifier_info(self) -> Optional[dict]:
++        """Verifier and pre-verifier records for SimulationRun.info, or None."""
++        info: dict = {}
++        if self.verifier is not None:
++            info["verifier"] = {
++                "enabled": True,
++                "records": [
++                    record.model_dump(mode="json") for record in self.verifier_records
++                ],
++            }
++        pre_verifier_rule = getattr(self.agent, "pre_verifier", None)
++        if pre_verifier_rule is not None:
++            info["pre_verifier"] = {
++                "enabled": True,
++                "rule": pre_verifier_rule,
++                "summary": summarize_records(self.pre_verifier_records),
++                "records": [
++                    record.model_dump(mode="json")
++                    for record in self.pre_verifier_records
++                ],
++            }
++        return info or None
++
++    def _collect_pre_verifier_records(self, *, revision_attempt: int) -> None:
++        """Move the agent's new pre-verifier records here, tagged for joining.
++
++        ``history_length`` and ``revision_attempt`` match the fields of the
++        verifier record for the same proposal. Records of rejected proposals
++        are kept too.
++        """
++        pop_records = getattr(self.agent, "pop_pre_verifier_records", None)
++        if not callable(pop_records):
++            return
++        for record in pop_records():
++            record.history_length = len(self.trajectory)
++            record.revision_attempt = revision_attempt
++            self.pre_verifier_records.append(record)
++
+     def step(self):
+         """
+         Perform one step of the simulation using half-duplex (turn-based) communication.
+@@ -855,9 +907,56 @@ class Orchestrator(BaseOrchestrator[AgentT, UserT, Message]):
+         elif (
+             self.from_role == Role.USER or self.from_role == Role.ENV
+         ) and self.to_role == Role.AGENT:
+-            agent_msg, self.agent_state = self.agent.generate_next_message(
+-                self.message, self.agent_state
+-            )
++            if self.verifier is None:
++                agent_msg, self.agent_state = self.agent.generate_next_message(
++                    self.message, self.agent_state
++                )
++                self._collect_pre_verifier_records(revision_attempt=0)
++            else:
++                state_before = deepcopy(self.agent_state)
++                agent_msg, proposed_state = self.agent.generate_next_message(
++                    self.message, deepcopy(state_before)
++                )
++                self._collect_pre_verifier_records(revision_attempt=0)
++                verdict = self._verify_proposal(agent_msg, revision_attempt=0)
++                if verdict.decision == VerifierDecision.REVISE:
++                    feedback = verdict.revision_instruction or verdict.reason
++                    revision_method = getattr(
++                        self.agent,
++                        "generate_next_message_with_verifier_feedback",
++                        None,
++                    )
++                    if self.verifier_max_revisions > 0 and callable(revision_method):
++                        print(
++                            "[verifier] revision requested; regenerating one "
++                            "uncommitted replacement proposal.",
++                            flush=True,
++                        )
++                        agent_msg, proposed_state = revision_method(
++                            self.message,
++                            deepcopy(state_before),
++                            feedback,
++                        )
++                        self._collect_pre_verifier_records(revision_attempt=1)
++                        verdict = self._verify_proposal(agent_msg, revision_attempt=1)
++                    else:
++                        print(
++                            "[verifier] revision requested, but this agent does not "
++                            "support private revision feedback or revisions are disabled.",
++                            flush=True,
++                        )
++                if verdict.decision != VerifierDecision.PASS:
++                    print(
++                        "[verifier] proposal rejected; no message or tool call was "
++                        "committed to the official trajectory.",
++                        flush=True,
++                    )
++                    self.agent_state = state_before
++                    self.done = True
++                    self.termination_reason = TerminationReason.VERIFIER_REJECTED
++                    self.step_count += 1
++                    return
++                self.agent_state = proposed_state
+             agent_msg.validate()
+             if self.agent.is_stop(agent_msg):
+                 self.done = True
+@@ -895,6 +994,38 @@ class Orchestrator(BaseOrchestrator[AgentT, UserT, Message]):
+         self.step_count += 1
+         self.environment.sync_tools()
+ 
++    def _verify_proposal(
++        self, proposed_message: AssistantMessage, *, revision_attempt: int
++    ):
++        """Verify and audit a proposal before it can affect state or trajectory."""
++        assert self.verifier is not None
++        verdict = self.verifier.verify(
++            policy=self.environment.get_policy(),
++            history=deepcopy(self.trajectory),
++            proposed_message=deepcopy(proposed_message),
++        )
++        self.verifier_records.append(
++            VerifierRecord(
++                proposal_index=len(self.verifier_records),
++                history_length=len(self.trajectory),
++                proposed_message=proposed_message.model_dump(mode="json"),
++                verdict=verdict,
++                revision_attempt=revision_attempt,
++            )
++        )
++        print(
++            "[verifier] "
++            f"attempt={revision_attempt} decision={verdict.decision.value} "
++            f"reason={verdict.reason}",
++            flush=True,
++        )
++        if verdict.decision == VerifierDecision.PASS:
++            print(
++                "[verifier] proposal accepted; it may now be committed and routed.",
++                flush=True,
++            )
++        return verdict
++
+     def get_trajectory(self) -> list[Message]:
+         """
+         Get the trajectory of the simulation.
+diff --git a/src/tau2/registry.py b/src/tau2/registry.py
+index 86a97a1deeea8a8e09cafeac4dfcff171b6454d4..48b8ab2e63bc54714cdbec92b8df28defc92acd1 100644
+--- a/src/tau2/registry.py
++++ b/src/tau2/registry.py
+@@ -37,6 +37,15 @@ from tau2.domains.retail.environment import get_tasks as retail_domain_get_tasks
+ from tau2.domains.retail.environment import (
+     get_tasks_split as retail_domain_get_tasks_split,
+ )
++from tau2.domains.retail_stock.environment import (
++    get_environment as retail_stock_domain_get_environment,
++)
++from tau2.domains.retail_stock.environment import (
++    get_tasks as retail_stock_domain_get_tasks,
++)
++from tau2.domains.retail_stock.environment import (
++    get_tasks_split as retail_stock_domain_get_tasks_split,
++)
+ from tau2.domains.telecom.environment import (
+     get_environment_manual_policy as telecom_domain_get_environment_manual_policy,
+ )
+@@ -327,6 +336,13 @@ try:
+         get_task_splits=retail_domain_get_tasks_split,
+     )
+ 
++    registry.register_domain(retail_stock_domain_get_environment, "retail_stock")
++    registry.register_tasks(
++        retail_stock_domain_get_tasks,
++        "retail_stock",
++        get_task_splits=retail_stock_domain_get_tasks_split,
++    )
++
+     registry.register_domain(telecom_domain_get_environment_manual_policy, "telecom")
+     registry.register_domain(
+         telecom_domain_get_environment_workflow_policy, "telecom-workflow"
+diff --git a/src/tau2/runner/build.py b/src/tau2/runner/build.py
+index d3e02b3e22281189a534e4f336daf5c88a50534b..14414f5b5083f563fb31d6cbb6d98065992fa7ca 100644
+--- a/src/tau2/runner/build.py
++++ b/src/tau2/runner/build.py
+@@ -32,6 +32,7 @@ from tau2.user.user_simulator_base import FullDuplexUser, HalfDuplexUser
+ from tau2.user_simulation_voice_presets import (
+     get_or_load_task_voice_config,
+ )
++from tau2.verifier.llm_verifier import LLMVerifier
+ 
+ # =============================================================================
+ # Low-level build functions (no RunConfig needed)
+@@ -75,6 +76,9 @@ def build_agent(
+     audio_native_config: Optional[AudioNativeConfig] = None,
+     solo_mode: bool = False,
+     audio_taps_dir: Optional[Path] = None,
++    pre_verifier: Optional[str] = None,
++    pre_verifier_llm: Optional[str] = None,
++    pre_verifier_llm_args: Optional[dict] = None,
+ ) -> Union[HalfDuplexAgent, FullDuplexAgent]:
+     """Build an agent from a registered name and an environment.
+ 
+@@ -114,7 +118,16 @@ def build_agent(
+         except Exception:
+             pass
+ 
+-    return agent_factory(
++    if (pre_verifier_llm is not None or pre_verifier_llm_args) and pre_verifier != "v2":
++        raise ValueError("The pre-verifier model is only used by pre-verifier rule v2.")
++    if pre_verifier_llm_args and pre_verifier_llm is None:
++        raise ValueError("Pre-verifier model arguments need a pre-verifier model.")
++    extra_kwargs = {"pre_verifier": pre_verifier} if pre_verifier is not None else {}
++    if pre_verifier_llm is not None:
++        extra_kwargs["pre_verifier_llm"] = pre_verifier_llm
++    if pre_verifier_llm_args:
++        extra_kwargs["pre_verifier_llm_args"] = pre_verifier_llm_args
++    agent = agent_factory(
+         tools=tools,
+         domain_policy=environment.get_policy(),
+         llm=llm,
+@@ -122,7 +135,17 @@ def build_agent(
+         task=task,
+         audio_native_config=audio_native_config,
+         audio_taps_dir=audio_taps_dir,
++        **extra_kwargs,
+     )
++    if (
++        pre_verifier is not None
++        and getattr(agent, "pre_verifier", None) != pre_verifier
++    ):
++        raise ValueError(
++            f"Agent '{agent_name}' does not support the pre-verifier "
++            f"(requested rule: {pre_verifier})."
++        )
++    return agent
+ 
+ 
+ def build_user(
+@@ -400,6 +423,9 @@ def build_text_orchestrator(
+         llm_args=config.llm_args_agent,
+         task=task,
+         solo_mode=solo_mode,
++        pre_verifier=config.pre_verifier,
++        pre_verifier_llm=config.pre_verifier_model,
++        pre_verifier_llm_args=config.pre_verifier_llm_args,
+     )
+ 
+     user = build_user(
+@@ -412,6 +438,15 @@ def build_text_orchestrator(
+         solo_mode=solo_mode,
+     )
+ 
++    verifier = (
++        LLMVerifier(
++            llm=config.verifier_model,
++            llm_args=config.verifier_llm_args,
++        )
++        if config.verifier_model is not None
++        else None
++    )
++
+     orchestrator = Orchestrator(
+         domain=domain,
+         agent=agent,
+@@ -425,6 +460,8 @@ def build_text_orchestrator(
+         simulation_id=simulation_id,
+         validate_communication=config.enforce_communication_protocol,
+         timeout=config.timeout,
++        verifier=verifier,
++        verifier_max_revisions=config.verifier_max_revisions,
+     )
+ 
+     logger.debug(
+diff --git a/src/tau2/runner/helpers.py b/src/tau2/runner/helpers.py
+index fd15027ddbab10368c7f0e34764ea69702d30265..4bed95fe515cb164414988b428206153f4a8fcfb 100644
+--- a/src/tau2/runner/helpers.py
++++ b/src/tau2/runner/helpers.py
+@@ -169,6 +169,9 @@ def get_info(config: RunConfig, **overrides) -> Info:
+         implementation=config.effective_agent,
+         llm=agent_llm,
+         llm_args=agent_llm_args,
++        pre_verifier=getattr(config, "pre_verifier", None),
++        pre_verifier_model=getattr(config, "pre_verifier_model", None),
++        pre_verifier_llm_args=getattr(config, "pre_verifier_llm_args", None) or None,
+     )
+     # Build env_kwargs so the environment is constructed with the correct
+     # retrieval variant (needed for banking_knowledge; no-op for other domains).
+diff --git a/src/tau2/utils/llm_utils.py b/src/tau2/utils/llm_utils.py
+index cc704825a14d1a81a791b9ca2a08aa2eb8989f8c..c2efb7a75a784791c2a177688479f1128111c04f 100644
+--- a/src/tau2/utils/llm_utils.py
++++ b/src/tau2/utils/llm_utils.py
+@@ -20,6 +20,8 @@ from loguru import logger
+ from tau2.config import (
+     DEFAULT_LLM_CACHE_TYPE,
+     DEFAULT_MAX_RETRIES,
++    DEFAULT_OLLAMA_BASE_URL,
++    DEFAULT_OLLAMA_NUM_CTX,
+     LLM_CACHE_ENABLED,
+     REDIS_CACHE_TTL,
+     REDIS_CACHE_VERSION,
+@@ -116,7 +118,7 @@ def _parse_ft_model_name(model: str) -> str:
+         return model
+ 
+ 
+-def get_response_cost(response: ModelResponse) -> float:
++def get_response_cost(response: ModelResponse) -> float | None:
+     """
+     Get the cost of the response from the litellm completion.
+     """
+@@ -127,7 +129,7 @@ def get_response_cost(response: ModelResponse) -> float:
+         cost = completion_cost(completion_response=response)
+     except Exception as e:
+         logger.error(e)
+-        return 0.0
++        return None
+     return cost
+ 
+ 
+@@ -378,6 +380,12 @@ def generate(
+     validate_message_history(messages)
+     if kwargs.get("num_retries") is None:
+         kwargs["num_retries"] = DEFAULT_MAX_RETRIES
++    if model.startswith(("ollama/", "ollama_chat/")):
++        # Ollama's runtime default is 4096 even when the model supports a much
++        # larger context. That silently truncates long policies/tool schemas
++        # and can make an agent believe that required tools do not exist.
++        kwargs.setdefault("num_ctx", DEFAULT_OLLAMA_NUM_CTX)
++        kwargs.setdefault("api_base", DEFAULT_OLLAMA_BASE_URL)
+ 
+     # Vertex AI Gemini 3 models require VERTEXAI_LOCATION="global"
+     if model.startswith("vertex_ai/gemini-3") and not os.environ.get(
+diff --git a/tests/test_llm_utils.py b/tests/test_llm_utils.py
+index 310d47b4034fdfc37b6677f83f7471ce484ad1f1..eb0fadbf6184934a60865719d1c1084c0da71713 100644
+--- a/tests/test_llm_utils.py
++++ b/tests/test_llm_utils.py
+@@ -11,6 +11,43 @@ from tau2.environment.tool import Tool, as_tool
+ from tau2.utils.llm_utils import generate
+ 
+ 
++def test_generate_sets_large_ollama_context(monkeypatch, messages):
++    captured_kwargs = {}
++
++    def fake_completion(**kwargs):
++        captured_kwargs.update(kwargs)
++        raise RuntimeError("stop after capturing request")
++
++    monkeypatch.setattr("tau2.utils.llm_utils.completion", fake_completion)
++
++    with pytest.raises(RuntimeError, match="stop after capturing request"):
++        generate("ollama_chat/qwen3.5:latest", messages)
++
++    assert captured_kwargs["num_ctx"] == 8192
++    assert captured_kwargs["api_base"] == "http://127.0.0.1:11435"
++
++
++def test_generate_preserves_explicit_ollama_context(monkeypatch, messages):
++    captured_kwargs = {}
++
++    def fake_completion(**kwargs):
++        captured_kwargs.update(kwargs)
++        raise RuntimeError("stop after capturing request")
++
++    monkeypatch.setattr("tau2.utils.llm_utils.completion", fake_completion)
++
++    with pytest.raises(RuntimeError, match="stop after capturing request"):
++        generate(
++            "ollama/qwen3:4b",
++            messages,
++            num_ctx=16384,
++            api_base="http://127.0.0.1:9999",
++        )
++
++    assert captured_kwargs["num_ctx"] == 16384
++    assert captured_kwargs["api_base"] == "http://127.0.0.1:9999"
++
++
+ @pytest.fixture
+ def model() -> str:
+     return "gpt-4o-mini"
