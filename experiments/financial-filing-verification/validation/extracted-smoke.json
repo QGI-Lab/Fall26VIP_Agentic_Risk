@@ -1,0 +1,15 @@
+{
+  "imported_from_extracted_source": true,
+  "cli_help": true,
+  "disabled_status": {
+    "qwen_enabled": false,
+    "status": "disabled; no Ollama request made"
+  },
+  "offline_demo": {
+    "success": "SUCCESS",
+    "recovery": "SUCCESS",
+    "missing": "INSUFFICIENT_EVIDENCE"
+  },
+  "all_checks_passed": true,
+  "environment_note": "Extracted-source isolation; existing installed dependencies reused; FFA variables cleared; no personal .env copied."
+}

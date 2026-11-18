@@ -1,0 +1,568 @@
+{
+  "release": "2026-11-16",
+  "project": "SEC_Agent",
+  "python_file_count": 78,
+  "python_files": [
+    "app.py",
+    "evaluation/__init__.py",
+    "evaluation/doubles.py",
+    "evaluation/fixtures.py",
+    "evaluation/live_demo.py",
+    "evaluation/metrics.py",
+    "evaluation/review_double.py",
+    "evaluation/runner.py",
+    "reports/build_project_encyclopedia.py",
+    "reports/midterm/build_evidence_index.py",
+    "reports/run_nine_cell_experiment.py",
+    "scripts/freeze_development.py",
+    "scripts/prepare_submission.py",
+    "src/financial_filing_agent/__init__.py",
+    "src/financial_filing_agent/agents/__init__.py",
+    "src/financial_filing_agent/agents/corrector.py",
+    "src/financial_filing_agent/agents/planner.py",
+    "src/financial_filing_agent/agents/verification_contract.py",
+    "src/financial_filing_agent/agents/verifier.py",
+    "src/financial_filing_agent/cli.py",
+    "src/financial_filing_agent/config/__init__.py",
+    "src/financial_filing_agent/config/financial_concepts.py",
+    "src/financial_filing_agent/config/formulas.py",
+    "src/financial_filing_agent/config/prompts.py",
+    "src/financial_filing_agent/config/settings.py",
+    "src/financial_filing_agent/graph/__init__.py",
+    "src/financial_filing_agent/graph/routing.py",
+    "src/financial_filing_agent/graph/workflow.py",
+    "src/financial_filing_agent/models/__init__.py",
+    "src/financial_filing_agent/models/finbert.py",
+    "src/financial_filing_agent/models/local_decoder.py",
+    "src/financial_filing_agent/retrieval/__init__.py",
+    "src/financial_filing_agent/retrieval/finbert_retriever.py",
+    "src/financial_filing_agent/retrieval/hybrid_retriever.py",
+    "src/financial_filing_agent/retrieval/lexical_retriever.py",
+    "src/financial_filing_agent/retrieval/sufficiency.py",
+    "src/financial_filing_agent/schemas/__init__.py",
+    "src/financial_filing_agent/schemas/evidence.py",
+    "src/financial_filing_agent/schemas/results.py",
+    "src/financial_filing_agent/schemas/state.py",
+    "src/financial_filing_agent/schemas/task.py",
+    "src/financial_filing_agent/services/__init__.py",
+    "src/financial_filing_agent/services/audit.py",
+    "src/financial_filing_agent/services/batch.py",
+    "src/financial_filing_agent/services/cache.py",
+    "src/financial_filing_agent/services/pipeline.py",
+    "src/financial_filing_agent/services/progress.py",
+    "src/financial_filing_agent/tools/__init__.py",
+    "src/financial_filing_agent/tools/calculator.py",
+    "src/financial_filing_agent/tools/concept_validation.py",
+    "src/financial_filing_agent/tools/evidence_builder.py",
+    "src/financial_filing_agent/tools/filing_loader.py",
+    "src/financial_filing_agent/tools/filing_parser.py",
+    "src/financial_filing_agent/tools/html.py",
+    "src/financial_filing_agent/tools/input_inventory.py",
+    "src/financial_filing_agent/tools/numeric_parser.py",
+    "src/financial_filing_agent/tools/sec_client.py",
+    "src/financial_filing_agent/tools/statement_origin.py",
+    "src/financial_filing_agent/tools/supporting_filing.py",
+    "src/financial_filing_agent/tools/validation.py",
+    "src/financial_filing_agent/tools/xbrl.py",
+    "src/financial_filing_agent/ui/__init__.py",
+    "src/financial_filing_agent/ui/batch_components.py",
+    "src/financial_filing_agent/ui/components.py",
+    "src/financial_filing_agent/ui/streamlit_app.py",
+    "tests/__init__.py",
+    "tests/test_application.py",
+    "tests/test_batch_preflight.py",
+    "tests/test_converted_filing.py",
+    "tests/test_finbert.py",
+    "tests/test_metric_workflow.py",
+    "tests/test_qwen_modes.py",
+    "tests/test_runtime_reliability.py",
+    "tests/test_sources.py",
+    "tests/test_split_parentheses.py",
+    "tests/test_statement_origin.py",
+    "tests/test_ui.py",
+    "tests/test_verifier_contract.py"
+  ],
+  "file_count_excluding_manifest": 94,
+  "files": [
+    {
+      "path": ".env.example",
+      "bytes": 342,
+      "sha256": "7eb3a1580714ddb3071329a4135af70608e77a08b333ef4cfe5047063e121cc2"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 93,
+      "sha256": "db20a70cb6dff9eabe569eb12f691c0ce1ef85dee46a694d9171e254ca2cf860"
+    },
+    {
+      "path": "app.py",
+      "bytes": 65,
+      "sha256": "3a2f14071628aaad8241e4cc28972a1c37246c50b0d2c01fb928d73d62b802ca"
+    },
+    {
+      "path": "config/research.json",
+      "bytes": 924,
+      "sha256": "252436d3234b71ddaed6988d47e04b735dbb1cc2eb224e7263d646a595bb696e"
+    },
+    {
+      "path": "evaluation/__init__.py",
+      "bytes": 76,
+      "sha256": "02b7dde313dfa289b7d89374b96bcda5986a893734a96f1cf1aac6dd17387a7f"
+    },
+    {
+      "path": "evaluation/doubles.py",
+      "bytes": 3252,
+      "sha256": "323e573c31d8db4f9c4cba0f08c102f94ce43afcdb30d9d68820b2bece57a69f"
+    },
+    {
+      "path": "evaluation/fixtures/apple_2025_10k.html",
+      "bytes": 1520328,
+      "sha256": "42329771bd20bedb5dba147211268401df95ffa371dca4d65e68a4f5bea5615b"
+    },
+    {
+      "path": "evaluation/fixtures/converted_apple_2026_10k.html",
+      "bytes": 1882178,
+      "sha256": "8388f868eb3e3d1d610cc1309fb4b9314156e412402bae4d5b10e0c7e7049587"
+    },
+    {
+      "path": "evaluation/fixtures/demo.html",
+      "bytes": 439,
+      "sha256": "e2b20f916e1a7d02bc04a9f5c7863973983da2705e7ba66d518b2f0b69366fb9"
+    },
+    {
+      "path": "evaluation/fixtures.py",
+      "bytes": 378,
+      "sha256": "f98e20edcc692d6dfbab8326e68c76c8c1ab39c6cfe25180d0c6f6f35e5294dd"
+    },
+    {
+      "path": "evaluation/live_demo.py",
+      "bytes": 2424,
+      "sha256": "893668f43ccb9dc17eae59685b3bc2005d5f898e2184a6fca96ff183966ff0de"
+    },
+    {
+      "path": "evaluation/metrics.py",
+      "bytes": 912,
+      "sha256": "a84adb4fb14f4f147c2b2005b781312e895cb75e6a0dde8d7b3f529c9806aae7"
+    },
+    {
+      "path": "evaluation/review_double.py",
+      "bytes": 1118,
+      "sha256": "b40a4f9a4ba4550575b0a01ccb28628f64cb28c37e263a419cc7cf27b89d5a56"
+    },
+    {
+      "path": "evaluation/runner.py",
+      "bytes": 1230,
+      "sha256": "6a55408ab5356882196b21608f079fe62cc285f851e35787b00c8d301f31882b"
+    },
+    {
+      "path": "FILE_GUIDE.md",
+      "bytes": 12799,
+      "sha256": "a7615f3e8a595d3a73055ad44287463035bc858818ef50f9f14e46e10653d448"
+    },
+    {
+      "path": "pyproject.toml",
+      "bytes": 866,
+      "sha256": "e994cba4e9cbc0814e69232635ac6401cc752c38af40af204bdb33b45d7851e5"
+    },
+    {
+      "path": "README.md",
+      "bytes": 8138,
+      "sha256": "193947bdda521c34cc710b521250d40875d5ab4989f5f85651533a2ba5b863ae"
+    },
+    {
+      "path": "reports/build_project_encyclopedia.py",
+      "bytes": 12140,
+      "sha256": "8aa4133ce3c2f943b7a94fb0f274c2f70bc44d23ef60cfde928791e19a69e224"
+    },
+    {
+      "path": "reports/midterm/build_evidence_index.py",
+      "bytes": 4940,
+      "sha256": "96d9b5ffdc81e4e99c1489036b8b289167b1f4ddb7e8f1582c567aa4e067a3c1"
+    },
+    {
+      "path": "reports/README.md",
+      "bytes": 1245,
+      "sha256": "76dd4cece26d1b7d297b01280fae5c326255d2393ac5d4f5448cdd0f17b55227"
+    },
+    {
+      "path": "reports/run_nine_cell_experiment.py",
+      "bytes": 8824,
+      "sha256": "a9e6b596afbc6d5072e0430c7956fdeb8f5d5f2aaeec3d7e0bfa0d951cca90ec"
+    },
+    {
+      "path": "requirements-lock.txt",
+      "bytes": 1612,
+      "sha256": "bbce08015b6123c9838eb0c6785905b28869fdea10258cef704abaf42b843756"
+    },
+    {
+      "path": "scripts/freeze_development.py",
+      "bytes": 1092,
+      "sha256": "d3a1b8890a28dbae6743859f19f0ae508399b3ec890d07890232cb3da51ef4be"
+    },
+    {
+      "path": "scripts/prepare_submission.py",
+      "bytes": 19293,
+      "sha256": "e78f850f740c1e5abf346d40863f632a5e0c422616092842cc6cecf4743eec8a"
+    },
+    {
+      "path": "src/financial_filing_agent/__init__.py",
+      "bytes": 114,
+      "sha256": "5a466672d9963ed89d6ea03a45635bd495c02251f6be2506f1bc24718b095529"
+    },
+    {
+      "path": "src/financial_filing_agent/agents/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "src/financial_filing_agent/agents/corrector.py",
+      "bytes": 962,
+      "sha256": "de5230b929f93d153f99339ae759e0704c84816fad1913489bbf6407662da18b"
+    },
+    {
+      "path": "src/financial_filing_agent/agents/planner.py",
+      "bytes": 1236,
+      "sha256": "cac467c9eb640d92e8c9636524e56814897d031dfcba62c252e858b16ed23c6a"
+    },
+    {
+      "path": "src/financial_filing_agent/agents/verification_contract.py",
+      "bytes": 9044,
+      "sha256": "c737c8c5497e74f3d3acdcd5f06055d1bd4044649c8ef294e98ea00c897e3705"
+    },
+    {
+      "path": "src/financial_filing_agent/agents/verifier.py",
+      "bytes": 1411,
+      "sha256": "34bd4e8a002831c1632c99fc57d9fb86d2205807a370a61668faddc59f80d593"
+    },
+    {
+      "path": "src/financial_filing_agent/cli.py",
+      "bytes": 3371,
+      "sha256": "4f49d4b0c238cf6e98f2149807fcebc2cef5596639e1d4a01f34c860cf971591"
+    },
+    {
+      "path": "src/financial_filing_agent/config/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "src/financial_filing_agent/config/financial_concepts.py",
+      "bytes": 2123,
+      "sha256": "37fc1d733681e014d562f19bcc67cc18765616ccc25d179f29e2905f6891c3d8"
+    },
+    {
+      "path": "src/financial_filing_agent/config/formulas.py",
+      "bytes": 2627,
+      "sha256": "362f658ec89e728eb38af52f76b11ee60d04fdddc80d9cd0cb19263763fd884c"
+    },
+    {
+      "path": "src/financial_filing_agent/config/prompts.py",
+      "bytes": 6295,
+      "sha256": "bca02dcfa583665bc4f11e6086cee9ef20034c05e2206cf3bb8578fff0d9acab"
+    },
+    {
+      "path": "src/financial_filing_agent/config/settings.py",
+      "bytes": 1971,
+      "sha256": "bf1d2d1cd1f9cf9052f50ca7d27ddbd274e3d40a9ca9bb1076fb5ebb8ace0660"
+    },
+    {
+      "path": "src/financial_filing_agent/graph/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "src/financial_filing_agent/graph/routing.py",
+      "bytes": 87,
+      "sha256": "bbdf564403ec87c802cf8f0203b546010deaf401d09e112ce64907be9304d547"
+    },
+    {
+      "path": "src/financial_filing_agent/graph/workflow.py",
+      "bytes": 1498,
+      "sha256": "a4b1f7af9a3261dee84b750fad722d4b3e12ddb3be3ad0b23e521c21dddabca4"
+    },
+    {
+      "path": "src/financial_filing_agent/models/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "src/financial_filing_agent/models/finbert.py",
+      "bytes": 2475,
+      "sha256": "618f46ec9a63a7e93488e7e0c060eed17624214491552e0972d35832c3024556"
+    },
+    {
+      "path": "src/financial_filing_agent/models/local_decoder.py",
+      "bytes": 4584,
+      "sha256": "b5c5961ba8e37d932d79400cc0d653cc18ba83998efa9361a4c8148ad8477972"
+    },
+    {
+      "path": "src/financial_filing_agent/retrieval/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "src/financial_filing_agent/retrieval/finbert_retriever.py",
+      "bytes": 1440,
+      "sha256": "f26ed3ed8ca00dac955c34f1927aedd6f35a5891e2d3e42c810ff9e4d357e5a9"
+    },
+    {
+      "path": "src/financial_filing_agent/retrieval/hybrid_retriever.py",
+      "bytes": 2992,
+      "sha256": "e1bf9c398850ca878b5107ec62d29e330280419c0dc8388acf3cbfd5060e7543"
+    },
+    {
+      "path": "src/financial_filing_agent/retrieval/lexical_retriever.py",
+      "bytes": 855,
+      "sha256": "cc0d038adab3e06c611ceeca07be7c00d16471eb6f9a46c636aa50b06420d596"
+    },
+    {
+      "path": "src/financial_filing_agent/retrieval/sufficiency.py",
+      "bytes": 1000,
+      "sha256": "bd029350bb6b2744845776fb0aed0e93441cab38d7be170edd01326734986f50"
+    },
+    {
+      "path": "src/financial_filing_agent/schemas/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "src/financial_filing_agent/schemas/evidence.py",
+      "bytes": 1040,
+      "sha256": "94f9c62f7a41140cec1417a515cea4d287642f74ae3366f7a6ea1aab5c10dbad"
+    },
+    {
+      "path": "src/financial_filing_agent/schemas/results.py",
+      "bytes": 3875,
+      "sha256": "581fd2fcf03670f9eeff0ff9f6d193ded361aef06e285b2c72ede100ac0c5c09"
+    },
+    {
+      "path": "src/financial_filing_agent/schemas/state.py",
+      "bytes": 1167,
+      "sha256": "f24b6922b3e3e39853d9a6b3f76b57c5387c5c0dfbf63a7884dd802b1a908216"
+    },
+    {
+      "path": "src/financial_filing_agent/schemas/task.py",
+      "bytes": 2123,
+      "sha256": "f1f7b96e47fbb1f2aa98c75fb71286d07c659712d7a1e751fdb9766f29660ec8"
+    },
+    {
+      "path": "src/financial_filing_agent/services/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "src/financial_filing_agent/services/audit.py",
+      "bytes": 1615,
+      "sha256": "a71620e7e4dc06e7169198c859d8974cbf5bfd5b89794cf809108a4eb74f05d9"
+    },
+    {
+      "path": "src/financial_filing_agent/services/batch.py",
+      "bytes": 9099,
+      "sha256": "2d0d599c700e886b820c39a26e2a838f883a8b81be006a1b3c982e871a5e217b"
+    },
+    {
+      "path": "src/financial_filing_agent/services/cache.py",
+      "bytes": 1208,
+      "sha256": "8db18b083cd416c17b32fcf2346c47fb1b33e5586ea53c80e7316366b5b99ce9"
+    },
+    {
+      "path": "src/financial_filing_agent/services/pipeline.py",
+      "bytes": 35820,
+      "sha256": "faff32411c1e6b3b756b096e7a79c12f3dbfe1539d01bfefab4605c8fc84b82d"
+    },
+    {
+      "path": "src/financial_filing_agent/services/progress.py",
+      "bytes": 3057,
+      "sha256": "e411cba3c7959c3eb4d404ce642dd5d4983f9f554d55568644891b5abc98a6de"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/calculator.py",
+      "bytes": 3233,
+      "sha256": "8379530285c72b059ce0d9b1e20f2524cd4d4ac035f5d41d91c4bba8e09c7c3e"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/concept_validation.py",
+      "bytes": 2946,
+      "sha256": "68c2be39a9a50fd7272a30e092ba5281ef688bb64ac8da6fe80e7a51c75de2d3"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/evidence_builder.py",
+      "bytes": 687,
+      "sha256": "ebf8b68125bce91fb0523bc5bdf400cdec059718fccbc1e45e38780425afaa9a"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/filing_loader.py",
+      "bytes": 2853,
+      "sha256": "59b3f184868ac1944e392c5113f3a3288a285a41335679fdb7fc56073b4e85fa"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/filing_parser.py",
+      "bytes": 7687,
+      "sha256": "08b2a8863e8fceee8fa3411475b41708985bc5d47fefd90adfd9c3a6afea753e"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/html.py",
+      "bytes": 391,
+      "sha256": "efcbdca2e13cb592becd8738ba1c1912dddf0460391feca9b2126d27087fdce9"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/input_inventory.py",
+      "bytes": 1185,
+      "sha256": "93a0a78f6198b656fa57a133c1bf9b63fdaa30048ab7e21261e3ce17e808fcfc"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/numeric_parser.py",
+      "bytes": 753,
+      "sha256": "985b75b930469e309703d18e98446206126e7b381184a83ffae49c577fe9a6dc"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/sec_client.py",
+      "bytes": 3384,
+      "sha256": "b05ee356b4b7a30bd6bf232ebd27ab8837ffaffbc24f79a6608122ac585e6007"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/statement_origin.py",
+      "bytes": 4022,
+      "sha256": "857b9d7245f4562b7306f574b11f778780a150d7ca522e98d01299788027b884"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/supporting_filing.py",
+      "bytes": 1918,
+      "sha256": "e1fd9e286cc6e7f5f94bf6bf001556f2737e2d3354167b509e70143e9db4b35e"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/validation.py",
+      "bytes": 3500,
+      "sha256": "1aae708821a6e1cb5054f81dc2843a046f03c7d8529569ae802fb37fee66d7bc"
+    },
+    {
+      "path": "src/financial_filing_agent/tools/xbrl.py",
+      "bytes": 2122,
+      "sha256": "9c8c924040de479b58b71e8e26b9d0a1c018ffdb5bfba2fc2525ae65748cdc40"
+    },
+    {
+      "path": "src/financial_filing_agent/ui/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "src/financial_filing_agent/ui/batch_components.py",
+      "bytes": 3882,
+      "sha256": "74cae1cd2bc90083abd528eea7ca8aed669105e6fa7764fe574eff517a556a0a"
+    },
+    {
+      "path": "src/financial_filing_agent/ui/components.py",
+      "bytes": 3800,
+      "sha256": "18a003b66640d7fd4377af2eb4af27117f15935c17a343d946fcf6d800709d86"
+    },
+    {
+      "path": "src/financial_filing_agent/ui/streamlit_app.py",
+      "bytes": 6616,
+      "sha256": "8ab57e797db7809aaf5d07b5abb126009667c9c093767962ff0db0fd53d52260"
+    },
+    {
+      "path": "tests/__init__.py",
+      "bytes": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "tests/test_application.py",
+      "bytes": 10677,
+      "sha256": "57861b1be80aba8e3f6af903dca9e2f38328004d44b55634fecdb865e4bb48eb"
+    },
+    {
+      "path": "tests/test_batch_preflight.py",
+      "bytes": 7138,
+      "sha256": "e29698454e8a73238fa20e6effc6346886175b62417d2c7b26e55831c165a80a"
+    },
+    {
+      "path": "tests/test_converted_filing.py",
+      "bytes": 4472,
+      "sha256": "eb087928e74c2ab2f2f1af3a40b5c2da6f8bf4e4fd5055cd2495f69bf2b52a06"
+    },
+    {
+      "path": "tests/test_finbert.py",
+      "bytes": 2996,
+      "sha256": "f3ec8b59eb1b8e2dec464afc49b952cf421826d4780ee4de0db8a96b836687fc"
+    },
+    {
+      "path": "tests/test_metric_workflow.py",
+      "bytes": 6775,
+      "sha256": "4ad6fac1b133c88bbe82bcb6dd791d2dfee3bb898afae07c0e4d5facd6d6b5a7"
+    },
+    {
+      "path": "tests/test_qwen_modes.py",
+      "bytes": 4748,
+      "sha256": "a7abf2749426031f4978b4a2e9e0d34071f29cd1e97729ce619982920ff969db"
+    },
+    {
+      "path": "tests/test_runtime_reliability.py",
+      "bytes": 6669,
+      "sha256": "79da4d0ebdc960a20dd5f5b3a18f2e2f214bb9cb3bc296116e27eddb825a8ecb"
+    },
+    {
+      "path": "tests/test_sources.py",
+      "bytes": 4305,
+      "sha256": "c12a90865ef18fb3963abab9ba10f5a252828d0f4e77b00bc58be3891aa6c7f0"
+    },
+    {
+      "path": "tests/test_split_parentheses.py",
+      "bytes": 2983,
+      "sha256": "98396ea7ef74c2e70872045178573d0ef510c167048db71746da04eac933f9ee"
+    },
+    {
+      "path": "tests/test_statement_origin.py",
+      "bytes": 6455,
+      "sha256": "e77b01d0a5fc11d8ccd69a587e48252927db62549efe0690d3ed265728757c5b"
+    },
+    {
+      "path": "tests/test_ui.py",
+      "bytes": 6674,
+      "sha256": "cd346e64ee41fb4fd3edd59246e6c203411d10bd7b8505daf641060fd35002d1"
+    },
+    {
+      "path": "tests/test_verifier_contract.py",
+      "bytes": 10259,
+      "sha256": "49427f2b381c25bb93d8e5e64d794fdb80acf1f4a3ecfcbcc295fdc7076523f1"
+    },
+    {
+      "path": "validation/extracted-smoke.json",
+      "bytes": 471,
+      "sha256": "eb1b7be60b22acaef27ea1f1c8e0e07a5d11cbb00da5e496fab9d421f5805034"
+    },
+    {
+      "path": "validation/extracted-tests.xml",
+      "bytes": 17087,
+      "sha256": "f0fd60a4ce9609f91d7575d940ef4e96648f830d9a706bb26c8e21906497a327"
+    },
+    {
+      "path": "validation/live-smoke.json",
+      "bytes": 2586,
+      "sha256": "252ec357e057861d1a2d4c9576ec93a60987f147d693d38fe29f8da6e98decae"
+    },
+    {
+      "path": "validation/VALIDATION.md",
+      "bytes": 1350,
+      "sha256": "12177d7af240337047582e513ba6844cf506928ad792f27df12ce23767f5269e"
+    },
+    {
+      "path": "validation/working-tree-tests.xml",
+      "bytes": 17087,
+      "sha256": "24cc0d291d6604c6fea48b3e0f056ca3ef45f94a1faba4420abec27dbd8ccb50"
+    }
+  ],
+  "excluded": [
+    "environments",
+    "models",
+    "personal .env",
+    "Git history",
+    "historical artifacts",
+    "old markdown reports",
+    "disk scans"
+  ],
+  "manifest_note": "The manifest does not hash itself. This is file integrity, not a digital signature."
+}

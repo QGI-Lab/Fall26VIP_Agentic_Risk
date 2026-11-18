@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-16",
+  "mode": "Real FinBERT/Qwen on retained Microsoft SEC HTML; no fresh SEC download",
+  "status": "SUCCESS",
+  "filing_metadata": {
+    "entity": "MICROSOFT CORPORATION",
+    "fiscal_year": "2026",
+    "period_end": "2026-06-30",
+    "form": "10-K",
+    "cik": "0000789019"
+  },
+  "source_hash": "a7749526481ece378c21422daadea12b6f4f10460e40a317ae50da32a04fd82f",
+  "calculation": {
+    "formula_id": "revenue_growth",
+    "formula": "(new revenue - old revenue) / old revenue * 100",
+    "value": 17.78868679984666,
+    "unit": "percent",
+    "direction": 1,
+    "inputs": {
+      "revenue": {
+        "FY2026": 331839000000.0,
+        "FY2025": 281724000000.0
+      }
+    },
+    "intermediates": {},
+    "comparison": {
+      "new_period": "FY2026",
+      "old_period": "FY2025",
+      "new_value": 331839000000.0,
+      "old_value": 281724000000.0,
+      "absolute_change": 50115000000.0,
+      "relative_change_percent": 17.78868679984666,
+      "period_value_unit": "USD",
+      "absolute_change_unit": "USD",
+      "direction": "increase"
+    }
+  },
+  "decoder_calls": 1,
+  "corrections": 0,
+  "model_versions": {
+    "finbert": "yiyanghkust/finbert-pretrain",
+    "revision": "88ab954a39ea6d3ce2b62cff086dd5ad1172c664",
+    "decoder": {
+      "name": "qwen2.5:latest",
+      "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e"
+    },
+    "prompt_version": "4",
+    "formula_version": "1",
+    "timestamp": "2026-11-16T19:35:37.354888+00:00",
+    "decoder_runtime": {
+      "available": true,
+      "server_available": true,
+      "model": "qwen2.5:latest",
+      "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+      "gpu": {
+        "size_vram": 0,
+        "size": 5957033656,
+        "note": "Resident VRAM allocation; not a guarantee of full GPU execution"
+      }
+    },
+    "resolved_finbert_revision": "88ab954a39ea6d3ce2b62cff086dd5ad1172c664",
+    "finbert_device": "cpu",
+    "prompt_hash": "bca02dcfa583665bc4f11e6086cee9ef20034c05e2206cf3bb8578fff0d9acab",
+    "formula_hash": "362f658ec89e728eb38af52f76b11ee60d04fdddc80d9cd0cb19263763fd884c"
+  },
+  "runtime_versions": {
+    "torch": "2.15.0",
+    "transformers": "4.57.6",
+    "langgraph": "1.2.19",
+    "pydantic": "2.14.2",
+    "streamlit": "1.66.1",
+    "beautifulsoup4": "4.15.0",
+    "python": "3.11.13"
+  },
+  "seconds": 137.83679809980094,
+  "privacy": "No personal .env, SEC contact, full config, raw call log or local source path is distributed."
+}
