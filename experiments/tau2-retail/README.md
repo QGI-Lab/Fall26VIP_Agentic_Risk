@@ -65,3 +65,11 @@ and can be shared on request. SHA-256:
 | `results-baseline-20261007-115707.json` | `9e7b38c76468d0b9b1b1eba152f329e9d4a63753789013993b481e6593c3470b` |
 | `results-pilot-20261008-003929.json` | `7c18b024c806ecd02104c658f0278eede42ee91a6af32ede8c1aff6984844667` |
 | `summary-pilot-20261008-003929.json` | `ad3b6204160e068d55ab262d7080450bd7561f6589ac519387866baa5f517283` |
+
+## Midterm verifier code
+
+The pair's midterm code (presented 2026-11-05) is in [`online-verifier/`](online-verifier/):
+a pre-verifier that narrows the tool list before each model call, and a post-verifier that
+checks each proposed step before it runs. It uses the same τ²-bench base commit, with a local
+Qwen 3.5 9B by default; see its [SETUP.md](online-verifier/SETUP.md). The notebooks above are
+earlier development runs.

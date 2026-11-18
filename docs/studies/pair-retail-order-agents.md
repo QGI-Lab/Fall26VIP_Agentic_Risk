@@ -3,8 +3,8 @@
 - Pair case issue: [#58](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/58)
 - Partners / GitHub usernames: Pin-Ray Liao (@bill255203), Yusuke Katsuki (@katsukii)
 - Peer feedback / reviewer: maintainer review on this PR (2026-10-13); peer reviewer to be arranged
-- Status: outline; development evidence collected, comparison not started
-- Dated plan revision and available feedback: 2026-10-07 initial outline for M2; 2026-10-13 maintainer feedback; 2026-10-14 sections 4–5 updated with the repeated pilot and the task 4 trace review
+- Status: pre- and post-verifier built and unit-tested (midterm, 2026-11-05); comparison not started
+- Dated plan revision and available feedback: 2026-10-07 initial outline for M2; 2026-10-13 maintainer feedback; 2026-10-14 sections 4–5 updated with the repeated pilot and the task 4 trace review; 2026-11-17 midterm code and slides added (maintainer note at the end)
 - Individual task links: @katsukii [#62](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/62); @bill255203 [#64](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/64)
 
 ## 1. Business workflow
@@ -48,3 +48,15 @@ We use τ²-bench's retail domain (commit `5bfa7e37b366`): its tasks, tools, pol
 - **Settings and deviations.** Agent, simulated customer and judge: `gemini/gemini-3.8-flash`. τ²-bench's default judge (OpenAI gpt-4.1) was replaced, and a code fence is stripped before parsing the judge's JSON. Across the 40-run pilot, averages were about 56 seconds, 101K input tokens, 4.7K output tokens and $0.092 per run for the agent and simulated customer; judge usage is excluded. Run files are kept locally with SHA-256 checksums ([README](../../experiments/tau2-retail/README.md)).
 - **Next.** The [τ-bench reading note](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/62#issuecomment-6064619007) is posted. Next, label candidate failures in the published runs; agree the evaluation subset, rules and a capped API plan (no course budget is provided; see [#74](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/74)). These runs show feasibility, not a failure rate or the effect of the check.
 - **Roles.** @bill255203 drafted sections 1–3 ([#64](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/64)); @katsukii drafted sections 4–5 and ran the experiments ([#62](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/62)). Next responsibilities are being agreed.
+
+### Midterm code and slides — November 17 maintainer note
+
+The pair presented on 5 November 2026 ([slides](../reports/pair-retail-order-agents-midterm.pdf)). The code behind the presentation is in [`experiments/tau2-retail/online-verifier/`](../../experiments/tau2-retail/online-verifier/): the pair's added files and one patch for τ²-bench at the same base commit, `5bfa7e37b366` ([setup](../../experiments/tau2-retail/online-verifier/SETUP.md)). It matches the fork [`bill255203/tau2-bench`](https://github.com/bill255203/tau2-bench) at commit `c583eff`.
+
+- **Question at the midterm.** Some order changes cannot be undone, and agents may claim completion too early. Can a check catch these mistakes before the agent acts?
+- **Motivating failures.** Three failures from @bill255203's October runs with Qwen 3.5 9B, one detailed run each: in task 34 the agent kept saying it would look up the order but never called the tool; in task 20 it changed the wrong item, which could not be fixed; in task 41 it reported both issues resolved while two changes were still missing. The slides name each with a MAST failure mode, some provisionally.
+- **Pre-verifier (@katsukii).** Before each model call, it hides tools that do not fit the conversation so far. Rule `v1` is fixed: for example, 3 of 16 tools are shown until the customer is identified, and order actions only when the order's status allows them. Rule `v2` adds one model call that keeps the order actions that fit the request; it had not been run on real tasks at the midterm.
+- **Post-verifier (@bill255203).** An LLM checks each proposed reply or tool call against the policy and the committed history before it runs. It returns PASS, REVISE or BLOCK; REVISE allows one private retry, and only PASS commits. @katsukii's commit `bfe21d5` removed the task data (expected actions, answers and the customer's hidden instructions) from the verifier's input.
+- **Evidence so far.** Both checks are built and unit-tested. On 2026-11-17, after rebuilding the code from upstream, the README's test command gave 110 passed, with 2 upstream tests that call OpenAI deselected. No comparison has been run. The verifier example in the slides is hypothetical. The 1.0 reward in `ONLINE_VERIFIER_LOCAL_RUN_REPORT.md` comes from a version before `bfe21d5`, when the verifier could see the task's answers, so it is not evidence that the check works.
+- **Not in this repository.** Unchanged τ²-bench files and the October run outputs; both are in the fork at `c583eff` (run outputs under `data/simulations/`).
+- **Next (from the slides).** Audit the context, verifier usage and cost; then run a controlled comparison with fixed tasks and models, tracking success, errors, latency and cost. As in the October pilot, state the task subset, trials and decision rule before running.

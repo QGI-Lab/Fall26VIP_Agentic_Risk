@@ -1,5 +1,13 @@
 # VIP Midterm Code — Online Verification in Retail Order Handling
 
+> **Case-study copy.** This note was added when the submission was prepared for this
+> repository; it is not part of the student's README. This folder does not contain the full
+> `tau2-bench/` tree described below. It holds only the files the pair added
+> (`tau2-bench/`, same relative paths) and one patch for the 13 upstream files they changed
+> (`tau2-bench.patch`). [SETUP.md](SETUP.md) rebuilds the presented code from upstream
+> τ²-bench. The only other change is that the student's university ID in the next line was
+> replaced by his GitHub username.
+
 Yusuke Katsuki (@katsukii), with Pin-Ray Liao. VIP: Agentic AI in Risk Management, Fall 2026.
 
 This zip holds the code behind our midterm presentation (Nov 5). We extended τ²-bench, a simulator in which an LLM service agent helps a simulated customer through store tools, with two checks around the service agent:
