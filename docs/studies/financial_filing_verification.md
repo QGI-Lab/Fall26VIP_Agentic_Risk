@@ -2,9 +2,9 @@
 
 - Pair case issue: [#59](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/59)
 - Partners / GitHub usernames: @ezhu001, @ziqianz360
-- Dated plan revision: 2026-10-09; maintainer navigation/development note added 2026-10-13
+- Dated plan revision: 2026-10-09; maintainer navigation/development note added 2026-10-13; midterm code and slides added 2026-11-17 (maintainer note at the end)
 - Individual tasks: [#61](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/61), [#69](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/69), [#70](https://github.com/zhongnz/Fall26VIP_Agentic_Risk/issues/70)
-- Status: outline with a reported development probe; peer check pending
+- Status: working prototype with development examples (midterm, 2026-11-05); comparison and peer check pending
 
 ## 1. Business workflow
 Financial analysts use public-company filings to identify reported financial values, compare performance across periods, calculate financial measures, and form research conclusions. The SEC explains that Form 10-K contains detailed information about a company's business, risks, operating results, financial results, and management's discussion of those results. Public 10-K filings are accessible through SEC EDGAR.
@@ -45,3 +45,43 @@ Next: peer-check the evidence, pin the model revision/settings, and define held-
 filings/tasks, period/unit labels, numeric tolerances and failure/repeat rules.
 Record verification disagreements and incorrect agreement as the comparison develops.
 The individual tasks remain open until their own evidence/review criteria are met.
+
+### Midterm code and slides — November 17 maintainer note
+
+The pair presented on 5 November 2026 ([slides](../reports/pair-financial-filing-verification-midterm.pdf)).
+The code submitted by @ezhu001 on 16 November is in
+[`experiments/financial-filing-verification/`](../../experiments/financial-filing-verification/);
+its [README](../../experiments/financial-filing-verification/README.md) gives setup and run commands.
+
+- **What it does.** It answers ten registered metric questions (for example revenue growth,
+  operating margin, current ratio and inventory growth) from a 10-K's HTML or Inline XBRL.
+  FinBERT (`yiyanghkust/finbert-pretrain`) ranks candidate rows. One local Qwen 2.5 model,
+  run through Ollama, plays three roles: planner, verifier and corrector. A fourteen-node
+  LangGraph workflow fixes the order of steps and the retry budgets. Python does all the
+  arithmetic, and Python guards check periods, units, source, reporting scope and
+  denominators; a model PASS alone cannot release a number. When required evidence is
+  missing, the agent returns `INSUFFICIENT_EVIDENCE` instead of guessing.
+- **Examples in the slides.** Tesla inventory growth from FY2024 to FY2025: 12,017 to 12,392,
+  or +3.12%. In a current-ratio run, the Qwen verifier passed rows for a variable interest
+  entity subset; the Python guard rejected them, the corrector moved to the primary balance
+  sheet, and the ratio went from 2.0249 to 2.1644. In a third example, a coverage check
+  stopped an inventory question whose FY2026 value was missing, before any verification or
+  calculation.
+- **Evidence so far.** Development examples only; the README states that the included
+  filings are development fixtures, not held-out benchmarks. The student's receipts in
+  `validation/` record one live run on a Microsoft 10-K (revenue growth from FY2025 to
+  FY2026: 17.79%, success). No comparison with and without the verification step has been
+  run, so section 2's question is still open. On 2026-11-17, during import, the offline
+  tests passed on Python 3.11 with the student's locked dependencies (130 passed, 3 skipped:
+  two optional live-model tests and one Windows-only test), and the offline demo gave its
+  three expected outcomes. Live models and SEC downloads were not rerun.
+- **Data.** Two Apple 10-K files are test fixtures: the FY2025 filing from SEC EDGAR, and
+  the FY2026 filing as converted by EDGAR Online's HTML converter, a third-party copy of
+  the public filing.
+- **Changed on import.** One check pattern in `scripts/prepare_submission.py` named the
+  student's local user folder; it now uses a general pattern, and `SUBMISSION_MANIFEST.json`
+  was updated to match. Nothing else was changed.
+- **Next (from the slides).** Check scope and dimension eligibility earlier; evaluate on
+  frozen held-out filings and new concepts; reduce model latency and calls. For section 2's
+  question, fix the held-out filings, tasks, tolerances and the with/without-verification
+  comparison before running.
